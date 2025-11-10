@@ -8,6 +8,7 @@ class AppPrefs {
     required this.isLoggedIn,
     required this.isGuest,
     required this.onboardingSeen,
+    required this.preferredScene,
     this.userName,
   });
 
@@ -18,6 +19,7 @@ class AppPrefs {
         isLoggedIn: false,
         isGuest: false,
         onboardingSeen: false,
+        preferredScene: 'pureFocus',
         userName: null,
       );
 
@@ -27,6 +29,7 @@ class AppPrefs {
   final bool isLoggedIn;
   final bool isGuest;
   final bool onboardingSeen;
+  final String preferredScene;
   final String? userName;
 
   AppPrefs copyWith({
@@ -36,6 +39,7 @@ class AppPrefs {
     bool? isLoggedIn,
     bool? isGuest,
     bool? onboardingSeen,
+    String? preferredScene,
     String? userName,
     bool clearUserName = false,
   }) {
@@ -46,6 +50,7 @@ class AppPrefs {
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
       isGuest: isGuest ?? this.isGuest,
       onboardingSeen: onboardingSeen ?? this.onboardingSeen,
+      preferredScene: preferredScene ?? this.preferredScene,
       userName: clearUserName ? null : (userName ?? this.userName),
     );
   }

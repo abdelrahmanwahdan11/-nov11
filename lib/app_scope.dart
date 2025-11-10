@@ -4,6 +4,7 @@ import 'shared/controllers/app_controller.dart';
 import 'shared/controllers/cart_controller.dart';
 import 'shared/controllers/catalog_controller.dart';
 import 'shared/controllers/compare_controller.dart';
+import 'shared/controllers/environment_controller.dart';
 import 'shared/controllers/favorites_controller.dart';
 import 'shared/controllers/notifications_controller.dart';
 
@@ -16,6 +17,7 @@ class AppScope extends InheritedWidget {
     required this.favoritesController,
     required this.cartController,
     required this.notificationsController,
+    required this.environmentController,
     required super.child,
   });
 
@@ -25,6 +27,7 @@ class AppScope extends InheritedWidget {
   final FavoritesController favoritesController;
   final CartController cartController;
   final NotificationsController notificationsController;
+  final EnvironmentController environmentController;
 
   static AppScope of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppScope>();
@@ -39,6 +42,7 @@ class AppScope extends InheritedWidget {
         compareController != oldWidget.compareController ||
         favoritesController != oldWidget.favoritesController ||
         cartController != oldWidget.cartController ||
-        notificationsController != oldWidget.notificationsController;
+        notificationsController != oldWidget.notificationsController ||
+        environmentController != oldWidget.environmentController;
   }
 }

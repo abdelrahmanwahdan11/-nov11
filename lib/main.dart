@@ -20,6 +20,7 @@ import 'shared/controllers/app_controller.dart';
 import 'shared/controllers/cart_controller.dart';
 import 'shared/controllers/catalog_controller.dart';
 import 'shared/controllers/compare_controller.dart';
+import 'shared/controllers/environment_controller.dart';
 import 'shared/controllers/favorites_controller.dart';
 import 'shared/controllers/notifications_controller.dart';
 
@@ -33,6 +34,8 @@ Future<void> main() async {
   await cartController.loadPrefs();
   final notificationsController = NotificationsController();
   await notificationsController.load();
+  final environmentController = EnvironmentController(appController)
+    ..bootstrap();
   runApp(
     AppScope(
       appController: appController,
@@ -41,6 +44,7 @@ Future<void> main() async {
       favoritesController: FavoritesController(),
       cartController: cartController,
       notificationsController: notificationsController,
+      environmentController: environmentController,
       child: const SmartAirApp(),
     ),
   );

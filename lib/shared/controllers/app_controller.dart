@@ -27,6 +27,7 @@ class AppController {
     final isGuest = prefs.getBool('isGuest') ?? false;
     final onboardingSeen = prefs.getBool('onboardingSeen') ?? false;
     final storedName = prefs.getString('userName');
+    final preferredScene = prefs.getString('preferredScene') ?? AppPrefs.defaults().preferredScene;
     final name = storedName != null && storedName.isNotEmpty ? storedName : null;
 
     prefsNotifier.value = AppPrefs.defaults().copyWith(
@@ -36,6 +37,7 @@ class AppController {
       isLoggedIn: isLoggedIn,
       isGuest: isGuest,
       onboardingSeen: onboardingSeen,
+      preferredScene: preferredScene,
       userName: name,
     );
 
@@ -70,6 +72,12 @@ class AppController {
     final prefs = await _ensurePrefs();
     await prefs.setBool('onboardingSeen', true);
     prefsNotifier.value = prefsNotifier.value.copyWith(onboardingSeen: true);
+  }
+
+  Future<void> updatePreferredScene(String sceneId) async {
+    final prefs = await _ensurePrefs();
+    await prefs.setString('preferredScene', sceneId);
+    prefsNotifier.value = prefsNotifier.value.copyWith(preferredScene: sceneId);
   }
 
   Future<void> setUser(User user) async {
@@ -107,6 +115,7 @@ class AppController {
     await prefs.remove('isGuest');
     await prefs.remove('onboardingSeen');
     await prefs.remove('userName');
+    await prefs.remove('preferredScene');
     prefsNotifier.value = AppPrefs.defaults();
     userNotifier.value = null;
   }

@@ -4,15 +4,19 @@ import '../../app_scope.dart';
 import '../../core/l10n/app_localizations.dart';
 import '../../core/utils/context_extensions.dart';
 import '../../shared/controllers/catalog_controller.dart';
+import '../../shared/controllers/environment_controller.dart';
 import '../../shared/controllers/favorites_controller.dart';
 import '../../shared/data/mock_products.dart';
 import '../../shared/models/app_prefs.dart';
+import '../../shared/models/environment_scene.dart';
 import '../../shared/models/product.dart';
 import '../../shared/widgets/chip_filter.dart';
+import '../../shared/widgets/environment_stat_card.dart';
 import '../../shared/widgets/primary_button.dart';
 import '../../shared/widgets/product_card.dart';
 import '../../shared/widgets/skeleton_box.dart';
 import '../../shared/widgets/smart_network_image.dart';
+import '../../shared/widgets/scene_card.dart';
 import '../../shared/widgets/routine_card.dart';
 
 class HomePage extends StatefulWidget {
@@ -50,6 +54,7 @@ class _HomePageState extends State<HomePage> {
     final scope = AppScope.of(context);
     final catalog = scope.catalogController;
     final favorites = scope.favoritesController;
+    final environment = scope.environmentController;
     final routines = _RoutineBlueprint.samples(l10n);
     final categories = {
       'all': l10n.getString('catalog'),
@@ -148,6 +153,124 @@ class _HomePageState extends State<HomePage> {
                               Navigator.of(context).pushNamed('/cart'),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 24),
+                    ValueListenableBuilder<EnvironmentScene>(
+                      valueListenable: environment.currentSceneNotifier,
+                      builder: (context, scene, _) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.getString('homeActiveScene'),
+                              style: context.textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildActiveSceneBanner(
+                              context,
+                              scene,
+                              () => _showSceneDetails(context, scene),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    ValueListenableBuilder<EnvironmentMetrics>(
+                      valueListenable: environment.metricsNotifier,
+                      builder: (context, metrics, _) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.getString('sceneMetricsTitle'),
+                              style: context.textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: EnvironmentStatCard(
+                                    icon: Icons.air,
+                                    label: l10n.getString('sceneAirQuality'),
+                                    value: 'AQI ${metrics.airQuality}',
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: EnvironmentStatCard(
+                                    icon: Icons.water_drop,
+                                    label: l10n.getString('sceneHumidity'),
+                                    value: '${metrics.humidity}%',
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: EnvironmentStatCard(
+                                    icon: Icons.thermostat,
+                                    label: l10n.getString('sceneTemperature'),
+                                    value: '${metrics.temperatureC.toStringAsFixed(1)}°C',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    ValueListenableBuilder<EnvironmentScene>(
+                      valueListenable: environment.currentSceneNotifier,
+                      builder: (context, activeScene, _) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.getString('homeScenesTitle'),
+                              style: context.textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              l10n.getString('homeScenesSubtitle'),
+                              style: context.textTheme.bodyMedium,
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              height: 260,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: environment.scenes.length,
+                                separatorBuilder: (_, __) => const SizedBox(width: 16),
+                                itemBuilder: (context, index) {
+                                  final scene = environment.scenes[index];
+                                  return SceneCard(
+                                    scene: scene,
+                                    selected: scene.id == activeScene.id,
+                                    onApply: () {
+                                      environment.applyScene(scene.id);
+                                      final messenger = ScaffoldMessenger.of(context);
+                                      messenger.hideCurrentSnackBar();
+                                      messenger.showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            l10n
+                                                .getString('sceneAppliedMessage')
+                                                .replaceFirst(
+                                                  '{scene}',
+                                                  l10n.getString(scene.titleKey),
+                                                ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    onInfo: () => _showSceneDetails(context, scene),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -442,6 +565,194 @@ class _HomePageState extends State<HomePage> {
       onPressed: onTap,
     );
   }
+
+  Widget _buildActiveSceneBanner(
+    BuildContext context,
+    EnvironmentScene scene,
+    VoidCallback onInfo,
+  ) {
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(32),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [scene.gradientStart, scene.gradientEnd],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.getString(scene.titleKey),
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: onInfo,
+                icon: const Icon(Icons.info_outline, color: Colors.white),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.getString(scene.subtitleKey),
+            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
+          ),
+          if (scene.highlightKeys.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: scene.highlightKeys
+                  .map(
+                    (key) => Chip(
+                      label: Text(
+                        l10n.getString(key),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      backgroundColor: Colors.white.withOpacity(0.15),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+Future<void> _showSceneDetails(BuildContext context, EnvironmentScene scene) {
+  final environment = AppScope.of(context).environmentController;
+  final messenger = ScaffoldMessenger.of(context);
+  final l10n = context.l10n;
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+    ),
+    builder: (sheetContext) {
+      final theme = Theme.of(sheetContext);
+      return ValueListenableBuilder<EnvironmentScene>(
+        valueListenable: environment.currentSceneNotifier,
+        builder: (context, activeScene, _) {
+          final isActive = activeScene.id == scene.id;
+          final metrics = scene.metrics;
+          return Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.getString(scene.titleKey),
+                        style: theme.textTheme.headlineMedium,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.getString(scene.subtitleKey),
+                  style: theme.textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.getString('sceneHighlightsTitle'),
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                ...scene.highlightKeys.map(
+                  (key) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.check_circle_outline, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(l10n.getString(key))),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.getString('sceneMetricsTitle'),
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${l10n.getString('sceneAirQuality')}: AQI ${metrics.airQuality}',
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        '${l10n.getString('sceneHumidity')}: ${metrics.humidity}%',
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        '${l10n.getString('sceneTemperature')}: ${metrics.temperatureC.toStringAsFixed(1)}°C',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                PrimaryButton(
+                  label: l10n.getString('sceneApply'),
+                  icon: Icons.check,
+                  onPressed: isActive
+                      ? null
+                      : () {
+                          environment.applyScene(scene.id);
+                          Navigator.of(sheetContext).pop();
+                          messenger.hideCurrentSnackBar();
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                l10n
+                                    .getString('sceneAppliedMessage')
+                                    .replaceFirst(
+                                      '{scene}',
+                                      l10n.getString(scene.titleKey),
+                                    ),
+                              ),
+                            ),
+                          );
+                        },
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
 }
 
 Future<void> _showRoutineSheet(BuildContext context, _RoutineBlueprint routine) {
