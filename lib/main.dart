@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'app_scope.dart';
 import 'core/l10n/app_localizations.dart';
 import 'core/theme/app_theme.dart';
+import 'features/air_quality/air_quality_page.dart';
 import 'features/auth/auth_page.dart';
 import 'features/cart/cart_page.dart';
 import 'features/catalog/catalog_page.dart';
@@ -17,6 +18,7 @@ import 'features/product/product_detail_page.dart';
 import 'features/search/search_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/support/support_page.dart';
+import 'shared/controllers/air_quality_controller.dart';
 import 'shared/controllers/app_controller.dart';
 import 'shared/controllers/cart_controller.dart';
 import 'shared/controllers/catalog_controller.dart';
@@ -41,6 +43,8 @@ Future<void> main() async {
   final environmentScheduleController =
       EnvironmentScheduleController(environmentController);
   await environmentScheduleController.load();
+  final airQualityController = AirQualityController();
+  await airQualityController.load();
   runApp(
     AppScope(
       appController: appController,
@@ -51,6 +55,7 @@ Future<void> main() async {
       notificationsController: notificationsController,
       environmentController: environmentController,
       environmentScheduleController: environmentScheduleController,
+      airQualityController: airQualityController,
       child: const SmartAirApp(),
     ),
   );
@@ -112,6 +117,8 @@ class _SmartAirAppState extends State<SmartAirApp> {
                 return MaterialPageRoute(builder: (_) => const NotificationsPage());
               case '/settings':
                 return MaterialPageRoute(builder: (_) => const SettingsPage());
+              case '/air-quality':
+                return MaterialPageRoute(builder: (_) => const AirQualityPage());
               case '/environment-schedules':
                 return MaterialPageRoute(
                   builder: (_) => const EnvironmentSchedulePage(),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'shared/controllers/air_quality_controller.dart';
 import 'shared/controllers/app_controller.dart';
 import 'shared/controllers/cart_controller.dart';
 import 'shared/controllers/catalog_controller.dart';
@@ -20,6 +21,7 @@ class AppScope extends InheritedWidget {
     required this.notificationsController,
     required this.environmentController,
     required this.environmentScheduleController,
+    required this.airQualityController,
     required super.child,
   });
 
@@ -31,6 +33,7 @@ class AppScope extends InheritedWidget {
   final NotificationsController notificationsController;
   final EnvironmentController environmentController;
   final EnvironmentScheduleController environmentScheduleController;
+  final AirQualityController airQualityController;
 
   static AppScope of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppScope>();
@@ -48,6 +51,7 @@ class AppScope extends InheritedWidget {
         notificationsController != oldWidget.notificationsController ||
         environmentController != oldWidget.environmentController ||
         environmentScheduleController !=
-            oldWidget.environmentScheduleController;
+            oldWidget.environmentScheduleController ||
+        airQualityController != oldWidget.airQualityController;
   }
 }

@@ -9,9 +9,11 @@ import '../../shared/controllers/environment_schedule_controller.dart';
 import '../../shared/controllers/favorites_controller.dart';
 import '../../shared/data/mock_products.dart';
 import '../../shared/models/app_prefs.dart';
+import '../../shared/models/air_quality.dart';
 import '../../shared/models/environment_scene.dart';
 import '../../shared/models/environment_schedule.dart';
 import '../../shared/models/product.dart';
+import '../../shared/widgets/air_quality_gauge.dart';
 import '../../shared/widgets/chip_filter.dart';
 import '../../shared/widgets/environment_stat_card.dart';
 import '../../shared/widgets/primary_button.dart';
@@ -58,6 +60,7 @@ class _HomePageState extends State<HomePage> {
     final catalog = scope.catalogController;
     final favorites = scope.favoritesController;
     final environment = scope.environmentController;
+    final airQuality = scope.airQualityController;
     final scheduleController = scope.environmentScheduleController;
     final routines = _RoutineBlueprint.samples(l10n);
     final categories = {
@@ -158,12 +161,30 @@ class _HomePageState extends State<HomePage> {
                         ),
                         _quickAction(
                           context,
+                          icon: Icons.air,
+                          label: l10n.getString('quickActionAirQuality'),
+                          onTap: () =>
+                              Navigator.of(context).pushNamed('/air-quality'),
+                        ),
+                        _quickAction(
+                          context,
                           icon: Icons.shopping_cart,
                           label: l10n.getString('quickActionCart'),
                           onTap: () =>
                               Navigator.of(context).pushNamed('/cart'),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 24),
+                    ValueListenableBuilder<AirQualitySnapshot>(
+                      valueListenable: airQuality.snapshotNotifier,
+                      builder: (context, snapshot, _) {
+                        return _HomeAirQualityPreview(
+                          snapshot: snapshot,
+                          onTap: () =>
+                              Navigator.of(context).pushNamed('/air-quality'),
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
                     ValueListenableBuilder<EnvironmentScene>(
@@ -936,6 +957,132 @@ Future<void> _showSceneDetails(BuildContext context, EnvironmentScene scene) {
       );
     },
   );
+}
+
+class _HomeAirQualityPreview extends StatelessWidget {
+  const _HomeAirQualityPreview({
+    required this.snapshot,
+    required this.onTap,
+  });
+
+  final AirQualitySnapshot snapshot;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final trendLabel = _trendLabel(snapshot.trend, l10n);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: theme.colorScheme.primary.withOpacity(0.12),
+          ),
+        ),
+        child: Row(
+          children: [
+            AirQualityGauge(
+              snapshot: snapshot,
+              size: 110,
+              trendLabel: trendLabel,
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.getString('homeAirQualityTitle'),
+                    style: theme.textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    l10n.getString('homeAirQualitySubtitle'),
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      _metricChip(
+                        context,
+                        label: l10n.getString('airQualityPm25'),
+                        value: '${snapshot.pm25.toStringAsFixed(1)} µg/m³',
+                      ),
+                      _metricChip(
+                        context,
+                        label: l10n.getString('airQualityCo2'),
+                        value: '${snapshot.co2} ppm',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        l10n.getString('homeAirQualityOpenInsights'),
+                        style: theme.textTheme.labelLarge,
+                      ),
+                      const Icon(Icons.chevron_right),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _metricChip(
+    BuildContext context, {
+    required String label,
+    required String value,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelSmall,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: theme.textTheme.titleSmall,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _trendLabel(AirQualityTrend trend, AppLocalizations l10n) {
+    switch (trend) {
+      case AirQualityTrend.improving:
+        return l10n.getString('airQualityTrendImproving');
+      case AirQualityTrend.steady:
+        return l10n.getString('airQualityTrendSteady');
+      case AirQualityTrend.declining:
+        return l10n.getString('airQualityTrendDeclining');
+    }
+  }
 }
 
 Future<void> _showRoutineSheet(BuildContext context, _RoutineBlueprint routine) {
