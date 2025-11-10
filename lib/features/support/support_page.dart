@@ -8,29 +8,59 @@ class SupportPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final faqs = [
-      ('Filter maintenance', 'Clean filters every 3 months and replace yearly.'),
-      ('Warranty coverage', 'All devices include a 2-year limited warranty.'),
-      ('Contact support', 'Reach us via hello@smartair.app'),
-    ];
     return Scaffold(
       appBar: AppBar(title: Text(l10n.getString('support'))),
-      body: ListView.separated(
+      body: ListView(
         padding: const EdgeInsets.all(24),
-        itemBuilder: (context, index) {
-          final faq = faqs[index];
-          return ExpansionTile(
-            title: Text(faq.$1),
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(faq.$2),
+        children: [
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: ListTile(
+              leading: const Icon(Icons.support_agent),
+              title: Text(l10n.getString('supportContactTitle')),
+              subtitle: Text(l10n.getString('supportContactSubtitle')),
+              trailing: TextButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.getString('supportContactEmail')),
+                    ),
+                  );
+                },
+                child: Text(l10n.getString('supportContactAction')),
               ),
-            ],
-          );
-        },
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemCount: faqs.length,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(l10n.getString('faqTitle'), style: context.textTheme.headlineMedium),
+          const SizedBox(height: 16),
+          ...[
+            ('supportFaqFilterTitle', 'supportFaqFilterBody'),
+            ('supportFaqWarrantyTitle', 'supportFaqWarrantyBody'),
+            ('supportFaqContactTitle', 'supportFaqContactBody'),
+          ].map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: ExpansionTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                collapsedShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                title: Text(l10n.getString(entry.$1)),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(l10n.getString(entry.$2)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

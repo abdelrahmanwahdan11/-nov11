@@ -21,6 +21,7 @@ import 'shared/controllers/cart_controller.dart';
 import 'shared/controllers/catalog_controller.dart';
 import 'shared/controllers/compare_controller.dart';
 import 'shared/controllers/favorites_controller.dart';
+import 'shared/controllers/notifications_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,13 +29,18 @@ Future<void> main() async {
   await appController.loadPrefs();
   final catalogController = CatalogController();
   await catalogController.loadInitial();
+  final cartController = CartController();
+  await cartController.loadPrefs();
+  final notificationsController = NotificationsController();
+  await notificationsController.load();
   runApp(
     AppScope(
       appController: appController,
       catalogController: catalogController,
       compareController: CompareController(),
       favoritesController: FavoritesController(),
-      cartController: CartController(),
+      cartController: cartController,
+      notificationsController: notificationsController,
       child: const SmartAirApp(),
     ),
   );

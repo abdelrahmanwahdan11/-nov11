@@ -5,8 +5,10 @@ import '../../core/utils/context_extensions.dart';
 import '../../shared/controllers/catalog_controller.dart';
 import '../../shared/controllers/favorites_controller.dart';
 import '../../shared/data/mock_products.dart';
+import '../../shared/models/app_prefs.dart';
 import '../../shared/models/product.dart';
 import '../../shared/widgets/chip_filter.dart';
+import '../../shared/widgets/primary_button.dart';
 import '../../shared/widgets/product_card.dart';
 import '../../shared/widgets/skeleton_box.dart';
 import '../../shared/widgets/smart_network_image.dart';
@@ -78,6 +80,73 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    ValueListenableBuilder<AppPrefs>(
+                      valueListenable: scope.appController.prefsNotifier,
+                      builder: (context, prefs, _) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _greetingFor(context, prefs),
+                              style: context.textTheme.headlineLarge,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _messageFor(context, prefs),
+                              style: context.textTheme.bodyMedium,
+                            ),
+                            const SizedBox(height: 16),
+                            PrimaryButton(
+                              label: l10n.getString('homeExploreCta'),
+                              icon: Icons.auto_awesome,
+                              onPressed: () =>
+                                  Navigator.of(context).pushNamed('/catalog'),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      l10n.getString('homeQuickActions'),
+                      style: context.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        _quickAction(
+                          context,
+                          icon: Icons.favorite,
+                          label: l10n.getString('quickActionFavorites'),
+                          onTap: () =>
+                              Navigator.of(context).pushNamed('/favorites'),
+                        ),
+                        _quickAction(
+                          context,
+                          icon: Icons.compare_arrows,
+                          label: l10n.getString('quickActionCompare'),
+                          onTap: () =>
+                              Navigator.of(context).pushNamed('/compare'),
+                        ),
+                        _quickAction(
+                          context,
+                          icon: Icons.headset_mic,
+                          label: l10n.getString('quickActionSupport'),
+                          onTap: () =>
+                              Navigator.of(context).pushNamed('/support'),
+                        ),
+                        _quickAction(
+                          context,
+                          icon: Icons.shopping_cart,
+                          label: l10n.getString('quickActionCart'),
+                          onTap: () =>
+                              Navigator.of(context).pushNamed('/cart'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
                     Text(
                       l10n.getString('discoverDevices'),
                       style: context.textTheme.headlineLarge,
@@ -309,6 +378,42 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(icon: const Icon(Icons.settings), label: l10n.getString('settings')),
         ],
       ),
+    );
+  }
+
+  String _greetingFor(BuildContext context, AppPrefs prefs) {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return context.l10n.getString('greetingMorning');
+    }
+    if (hour < 17) {
+      return context.l10n.getString('greetingAfternoon');
+    }
+    return context.l10n.getString('greetingEvening');
+  }
+
+  String _messageFor(BuildContext context, AppPrefs prefs) {
+    final name = prefs.userName;
+    if (name != null && name.isNotEmpty && !prefs.isGuest) {
+      return context.l10n
+          .getString('greetingNamed')
+          .replaceFirst('{name}', name);
+    }
+    return context.l10n.getString('greetingGuest');
+  }
+
+  Widget _quickAction(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    return ActionChip(
+      avatar: Icon(icon, color: theme.colorScheme.primary),
+      backgroundColor: theme.cardColor,
+      label: Text(label),
+      onPressed: onTap,
     );
   }
 }
