@@ -10,11 +10,13 @@ class SearchController {
     _resultsController = StreamController<List<Product>>.broadcast();
     suggestionNotifier = ValueNotifier<List<String>>(_trendingQueries);
     _lastFilters = <String, dynamic>{};
+    recentNotifier = ValueNotifier<List<String>>(<String>[]);
   }
 
   late final StreamController<List<Product>> _resultsController;
   Stream<List<Product>> get results => _resultsController.stream;
   late final ValueNotifier<List<String>> suggestionNotifier;
+  late final ValueNotifier<List<String>> recentNotifier;
 
   String _lastQuery = '';
   Map<String, dynamic> _lastFilters = {};
@@ -30,6 +32,7 @@ class SearchController {
     _debounce?.cancel();
     _resultsController.close();
     suggestionNotifier.dispose();
+    recentNotifier.dispose();
   }
 
   void search(String query, Map<String, dynamic> filters) {
@@ -70,7 +73,30 @@ class SearchController {
     matches = _applyFilters(matches, _lastFilters);
     matches = _applySort(matches);
     _resultsController.add(matches);
+    if (_lastQuery.trim().isNotEmpty) {
+      _addRecentQuery(_lastQuery.trim());
+    }
     _updateSuggestions(query);
+  }
+
+  void _addRecentQuery(String query) {
+    final list = [...recentNotifier.value];
+    list.removeWhere((element) => element.toLowerCase() == query.toLowerCase());
+    list.insert(0, query);
+    if (list.length > 6) {
+      list.removeRange(6, list.length);
+    }
+    recentNotifier.value = list;
+  }
+
+  void clearRecent() {
+    recentNotifier.value = <String>[];
+  }
+
+  void removeRecent(String query) {
+    final list = [...recentNotifier.value];
+    list.removeWhere((element) => element == query);
+    recentNotifier.value = list;
   }
 
   void _updateSuggestions(String query) {

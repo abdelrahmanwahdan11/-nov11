@@ -128,6 +128,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             ),
                           ),
                         ),
+                        if (product.careTips.isNotEmpty) ...[
+                          const SizedBox(height: 32),
+                          Text(l10n.getString('careSectionTitle'),
+                              style: context.textTheme.headlineMedium),
+                          const SizedBox(height: 12),
+                          ...product.careTips.asMap().entries.map(
+                            (entry) => _buildCareTip(
+                              context,
+                              entry.value,
+                              isLast: entry.key == product.careTips.length - 1,
+                            ),
+                          ),
+                        ],
                         if (product.frames360 != null) ...[
                           const SizedBox(height: 32),
                           Text(l10n.getString('preview360'), style: context.textTheme.headlineMedium),
@@ -301,5 +314,80 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         );
       },
     );
+}
+
+  Widget _buildCareTip(BuildContext context, String key, {required bool isLast}) {
+    final l10n = context.l10n;
+    final icon = _iconForCareTip(key);
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.primary;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: color.withOpacity(0.15),
+                child: Icon(icon, color: color),
+              ),
+              if (!isLast)
+                Container(
+                  width: 2,
+                  height: 32,
+                  margin: const EdgeInsets.only(top: 6),
+                  color: color.withOpacity(0.25),
+                ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.getString('${key}Title'),
+                    style: context.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.getString('${key}Body'),
+                    style: context.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _iconForCareTip(String key) {
+    switch (key) {
+      case 'careTipWarmup':
+        return Icons.local_fire_department;
+      case 'careTipSensors':
+        return Icons.sensors;
+      case 'careTipSurface':
+        return Icons.spa;
+      default:
+        return Icons.air;
+    }
   }
 }

@@ -24,6 +24,7 @@ final mockProducts = <Product>[
       'https://picsum.photos/seed/nimbus-flow-pro-01/900/1200',
       'https://picsum.photos/seed/nimbus-flow-pro-02/900/1200',
     ],
+    careTips: const ['careTipFilter', 'careTipSurface', 'careTipSensors'],
   ),
   Product(
     id: 'p2',
@@ -43,6 +44,7 @@ final mockProducts = <Product>[
     },
     noiseLevelDb: 24,
     powerW: 38,
+    careTips: const ['careTipFilter', 'careTipSurface', 'careTipWarmup'],
   ),
   Product(
     id: 'p3',
@@ -63,6 +65,7 @@ final mockProducts = <Product>[
     noiseLevelDb: 18,
     powerW: 20,
     hepaClass: 'H11',
+    careTips: const ['careTipFilter', 'careTipSurface'],
   ),
   Product(
     id: 'p4',
@@ -82,6 +85,7 @@ final mockProducts = <Product>[
     },
     noiseLevelDb: 20,
     powerW: 30,
+    careTips: const ['careTipFilter', 'careTipSensors'],
   ),
   Product(
     id: 'p5',
@@ -101,6 +105,7 @@ final mockProducts = <Product>[
     },
     noiseLevelDb: 26,
     powerW: 52,
+    careTips: const ['careTipWarmup', 'careTipSurface', 'careTipSensors'],
   ),
   Product(
     id: 'p6',
@@ -120,6 +125,7 @@ final mockProducts = <Product>[
     },
     noiseLevelDb: 22,
     powerW: 18,
+    careTips: const ['careTipFilter', 'careTipSurface'],
   ),
   Product(
     id: 'p7',
@@ -139,6 +145,7 @@ final mockProducts = <Product>[
     },
     noiseLevelDb: 25,
     powerW: 48,
+    careTips: const ['careTipFilter', 'careTipSensors'],
   ),
   Product(
     id: 'p8',
@@ -159,5 +166,6 @@ final mockProducts = <Product>[
     noiseLevelDb: 21,
     powerW: 55,
     hepaClass: 'H14',
+    careTips: const ['careTipFilter', 'careTipSensors', 'careTipSurface'],
   ),
 ];

@@ -41,6 +41,7 @@ class AppLocalizations {
       'addToCompare': 'Add to compare',
       'viewCompare': 'View compare',
       'specifications': 'Specifications',
+      'careSectionTitle': 'Care ritual',
       'overview': 'Overview',
       'price': 'Price',
       'currencySymbol': r'$',
@@ -115,6 +116,8 @@ class AppLocalizations {
       'searchEmpty': "We couldn't find matching devices. Try adjusting filters.",
       'resultsCount': '{count} results',
       'trendingSearches': 'Trending now',
+      'recentSearches': 'Recent searches',
+      'clearHistory': 'Clear history',
       'greetingMorning': 'Good morning',
       'greetingAfternoon': 'Good afternoon',
       'greetingEvening': 'Good evening',
@@ -126,6 +129,20 @@ class AppLocalizations {
       'quickActionCompare': 'Compare',
       'quickActionSupport': 'Support',
       'quickActionCart': 'Cart',
+      'homeRoutinesTitle': 'Atmosphere rituals',
+      'routineShopCta': 'Explore matching devices',
+      'routineMorningTitle': 'Sunrise circulation',
+      'routineMorningSubtitle': 'Wake up to gentle airflow and rising warmth.',
+      'routineMorningBody':
+          'Blend oscillation with a gradual heat boost between 6:30–7:30 to gently balance comfort as you begin the day.',
+      'routineSleepTitle': 'Sleep sanctuary',
+      'routineSleepSubtitle': 'Soften airflow with dimmed lighting and hush mode.',
+      'routineSleepBody':
+          'Schedule Night mode with a 20° pivot towards the ceiling and reduced brightness to calm airflow before bedtime.',
+      'routineAllergyTitle': 'Allergy shield',
+      'routineAllergySubtitle': 'Pulse HEPA filtration during pollen spikes.',
+      'routineAllergyBody':
+          'Automate HEPA boost cycles every afternoon and remind yourself to swap cartridges every 90 days during allergy season.',
       'notificationTitleFlash': 'Flash sale on Nimbus Flow Pro',
       'notificationTitleFilter': 'Filter replacement reminder',
       'notificationTitleCollection': 'New heater collection dropping soon',
@@ -147,6 +164,18 @@ class AppLocalizations {
       'supportFaqContactTitle': 'Where can I request advanced support?',
       'supportFaqContactBody':
           'Reach our concierge team for tailored routines, setup guidance, and AR placement tips.',
+      'careTipFilterTitle': 'Refresh your filtration core',
+      'careTipFilterBody':
+          'Vacuum the pre-filter weekly and note cartridge changes so sensors maintain accurate airflow readings.',
+      'careTipSurfaceTitle': 'Polish the outer shell',
+      'careTipSurfaceBody':
+          'Use a microfiber cloth and neutral cleaner to remove dust from the bladeless ring without scratching the finish.',
+      'careTipSensorsTitle': 'Calibrate the smart sensors',
+      'careTipSensorsBody':
+          'Hold the reset button for 5 seconds after cleaning so VOC and particulate readings stay reliable.',
+      'careTipWarmupTitle': 'Seasonal warm-up',
+      'careTipWarmupBody':
+          'Run a five-minute high-heat cycle before winter to burn off residue and confirm thermal protections are active.',
     },
     'ar': {
       'appTitle': 'أجهزة الهواء الذكية',
@@ -180,6 +209,7 @@ class AppLocalizations {
       'addToCompare': 'أضف للمقارنة',
       'viewCompare': 'عرض المقارنة',
       'specifications': 'المواصفات',
+      'careSectionTitle': 'روتين العناية',
       'overview': 'نظرة عامة',
       'price': 'السعر',
       'currencySymbol': r'$',
@@ -254,6 +284,8 @@ class AppLocalizations {
       'searchEmpty': 'لم نعثر على أجهزة مطابقة، جرّب تعديل الفلاتر.',
       'resultsCount': '{count} نتيجة',
       'trendingSearches': 'الأكثر شيوعاً',
+      'recentSearches': 'عمليات البحث الأخيرة',
+      'clearHistory': 'مسح السجل',
       'greetingMorning': 'صباح الخير',
       'greetingAfternoon': 'نهارك جميل',
       'greetingEvening': 'مساء الهدوء',
@@ -265,6 +297,20 @@ class AppLocalizations {
       'quickActionCompare': 'المقارنة',
       'quickActionSupport': 'الدعم',
       'quickActionCart': 'السلة',
+      'homeRoutinesTitle': 'طقوس الأجواء',
+      'routineShopCta': 'اكتشف الأجهزة المناسبة',
+      'routineMorningTitle': 'دورة الصباح',
+      'routineMorningSubtitle': 'استيقظ على تدفق لطيف ودفء متدرج.',
+      'routineMorningBody':
+          'ادمج الاهتزاز مع رفع تدريجي للحرارة بين 6:30 و7:30 لتوازن الراحة عند بداية يومك.',
+      'routineSleepTitle': 'ملاذ النوم',
+      'routineSleepSubtitle': 'هواء هادئ مع إضاءة منخفضة ووضع السكون.',
+      'routineSleepBody':
+          'اضبط وضع الليل مع ميل 20° نحو السقف وتقليل الإضاءة لتهدئة تدفق الهواء قبل النوم.',
+      'routineAllergyTitle': 'درع الحساسية',
+      'routineAllergySubtitle': 'تعزيز HEPA خلال فترات ارتفاع الغبار.',
+      'routineAllergyBody':
+          'أتمت دورات تعزيز HEPA كل بعد ظهر وذكّر نفسك بتغيير الفلاتر كل 90 يوماً خلال موسم الحساسية.',
       'notificationTitleFlash': 'عرض فلاش على Nimbus Flow Pro',
       'notificationTitleFilter': 'تذكير بتغيير الفلتر',
       'notificationTitleCollection': 'مجموعة المدافئ الجديدة قريباً',
@@ -285,6 +331,18 @@ class AppLocalizations {
       'supportFaqContactTitle': 'أين أطلب دعماً متقدماً؟',
       'supportFaqContactBody':
           'تواصل مع فريق الكونسيرج لتخصيص الروتين والمساعدة في الإعداد ونصائح العرض بالواقع المعزز.',
+      'careTipFilterTitle': 'أنعش نواة الفلترة',
+      'careTipFilterBody':
+          'قم بتنظيف الفلتر المسبق بالمكنسة أسبوعياً وسجل تغييرات الخرطوشة للحفاظ على دقة قراءة تدفق الهواء.',
+      'careTipSurfaceTitle': 'تنظيف الهيكل الخارجي',
+      'careTipSurfaceBody':
+          'استخدم قطعة قماش من الألياف الدقيقة ومنظفاً محايداً لإزالة الغبار عن الحلقة بلا خدوش.',
+      'careTipSensorsTitle': 'معايرة الحساسات الذكية',
+      'careTipSensorsBody':
+          'اضغط زر إعادة الضبط لمدة 5 ثوانٍ بعد التنظيف للحفاظ على دقة قراءات المركبات والجزيئات.',
+      'careTipWarmupTitle': 'تهيئة موسمية',
+      'careTipWarmupBody':
+          'قم بتشغيل دورة حرارة عالية لمدة خمس دقائق قبل الشتاء لإزالة الرواسب والتأكد من فعالية الحمايات الحرارية.',
     },
   };
 

@@ -170,6 +170,47 @@ class _SearchPageState extends State<SearchPage> {
                 ),
                 const SizedBox(height: 12),
                 ValueListenableBuilder<List<String>>(
+                  valueListenable: _controller.recentNotifier,
+                  builder: (context, recent, _) {
+                    if (recent.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              l10n.getString('recentSearches'),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            TextButton(
+                              onPressed: _controller.clearRecent,
+                              child: Text(l10n.getString('clearHistory')),
+                            ),
+                          ],
+                        ),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: recent
+                              .map(
+                                (query) => InputChip(
+                                  label: Text(query),
+                                  onPressed: () => _applySuggestion(query),
+                                  onDeleted: () => _controller.removeRecent(query),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                ValueListenableBuilder<List<String>>(
                   valueListenable: _controller.suggestionNotifier,
                   builder: (context, suggestions, _) {
                     if (suggestions.isEmpty) {

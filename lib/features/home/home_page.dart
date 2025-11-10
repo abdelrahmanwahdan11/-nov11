@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app_scope.dart';
+import '../../core/l10n/app_localizations.dart';
 import '../../core/utils/context_extensions.dart';
 import '../../shared/controllers/catalog_controller.dart';
 import '../../shared/controllers/favorites_controller.dart';
@@ -12,6 +13,7 @@ import '../../shared/widgets/primary_button.dart';
 import '../../shared/widgets/product_card.dart';
 import '../../shared/widgets/skeleton_box.dart';
 import '../../shared/widgets/smart_network_image.dart';
+import '../../shared/widgets/routine_card.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -48,6 +50,7 @@ class _HomePageState extends State<HomePage> {
     final scope = AppScope.of(context);
     final catalog = scope.catalogController;
     final favorites = scope.favoritesController;
+    final routines = _RoutineBlueprint.samples(l10n);
     final categories = {
       'all': l10n.getString('catalog'),
       'fan': l10n.getString('fans'),
@@ -145,6 +148,29 @@ class _HomePageState extends State<HomePage> {
                               Navigator.of(context).pushNamed('/cart'),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      l10n.getString('homeRoutinesTitle'),
+                      style: context.textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 250,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemBuilder: (context, index) {
+                          final routine = routines[index];
+                          return RoutineCard(
+                            title: routine.title,
+                            description: routine.description,
+                            imageSeed: routine.imageSeed,
+                            onTap: () => _showRoutineSheet(context, routine),
+                          );
+                        },
+                        separatorBuilder: (_, __) => const SizedBox(width: 16),
+                        itemCount: routines.length,
+                      ),
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -415,5 +441,98 @@ class _HomePageState extends State<HomePage> {
       label: Text(label),
       onPressed: onTap,
     );
+  }
+}
+
+Future<void> _showRoutineSheet(BuildContext context, _RoutineBlueprint routine) {
+  final l10n = context.l10n;
+  final theme = Theme.of(context);
+  return showModalBottomSheet(
+    context: context,
+    backgroundColor: theme.colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+    ),
+    builder: (context) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(routine.icon, color: theme.colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    routine.title,
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              routine.longDescription,
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).pushNamed('/catalog'),
+              icon: const Icon(Icons.storefront),
+              label: Text(l10n.getString('routineShopCta')),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+class _RoutineBlueprint {
+  const _RoutineBlueprint({
+    required this.title,
+    required this.description,
+    required this.longDescription,
+    required this.imageSeed,
+    required this.icon,
+  });
+
+  final String title;
+  final String description;
+  final String longDescription;
+  final String imageSeed;
+  final IconData icon;
+
+  static List<_RoutineBlueprint> samples(AppLocalizations l10n) {
+    return [
+      _RoutineBlueprint(
+        title: l10n.getString('routineMorningTitle'),
+        description: l10n.getString('routineMorningSubtitle'),
+        longDescription: l10n.getString('routineMorningBody'),
+        imageSeed: 'routine-morning-light',
+        icon: Icons.wb_sunny,
+      ),
+      _RoutineBlueprint(
+        title: l10n.getString('routineSleepTitle'),
+        description: l10n.getString('routineSleepSubtitle'),
+        longDescription: l10n.getString('routineSleepBody'),
+        imageSeed: 'routine-sleep-haven',
+        icon: Icons.nightlight,
+      ),
+      _RoutineBlueprint(
+        title: l10n.getString('routineAllergyTitle'),
+        description: l10n.getString('routineAllergySubtitle'),
+        longDescription: l10n.getString('routineAllergyBody'),
+        imageSeed: 'routine-allergy-guard',
+        icon: Icons.grass,
+      ),
+    ];
   }
 }

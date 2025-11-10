@@ -12,6 +12,7 @@ class Product {
     this.noiseLevelDb,
     this.powerW,
     this.hepaClass,
+    this.careTips = const <String>[],
   });
 
   final String id;
@@ -26,4 +27,5 @@ class Product {
   final int? noiseLevelDb;
   final int? powerW;
   final String? hepaClass;
+  final List<String> careTips;
 }
