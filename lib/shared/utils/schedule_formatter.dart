@@ -47,6 +47,10 @@ class ScheduleFormatter {
     DateTime.sunday,
   };
 
+  static String labelForWeekday(AppLocalizations l10n, int day) {
+    return _labelForDay(l10n, day);
+  }
+
   static String _labelForDay(AppLocalizations l10n, int day) {
     switch (day) {
       case DateTime.monday:

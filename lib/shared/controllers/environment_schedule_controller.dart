@@ -9,16 +9,20 @@ import 'environment_controller.dart';
 class EnvironmentScheduleController {
   EnvironmentScheduleController(this._environmentController)
       : schedulesNotifier =
-            ValueNotifier<List<EnvironmentSchedule>>(const <EnvironmentSchedule>[]);
+            ValueNotifier<List<EnvironmentSchedule>>(const <EnvironmentSchedule>[]),
+        pausedNotifier = ValueNotifier<bool>(false);
 
   final EnvironmentController _environmentController;
   final ValueNotifier<List<EnvironmentSchedule>> schedulesNotifier;
+  final ValueNotifier<bool> pausedNotifier;
 
   SharedPreferences? _prefs;
   static const String _storageKey = 'environmentSchedules';
+  static const String _pausedStorageKey = 'environmentSchedulesPaused';
 
   Future<void> load() async {
     final prefs = await _ensurePrefs();
+    pausedNotifier.value = prefs.getBool(_pausedStorageKey) ?? false;
     final stored = prefs.getString(_storageKey);
     if (stored != null && stored.isNotEmpty) {
       try {
@@ -63,6 +67,16 @@ class EnvironmentScheduleController {
     await _persist();
   }
 
+  Future<void> setPaused(bool value) async {
+    if (pausedNotifier.value == value) {
+      return;
+    }
+    pausedNotifier.value = value;
+    await _persist();
+  }
+
+  Future<void> togglePaused() => setPaused(!pausedNotifier.value);
+
   Future<void> remove(String id) async {
     final current = List<EnvironmentSchedule>.from(schedulesNotifier.value);
     current.removeWhere((element) => element.id == id);
@@ -74,6 +88,9 @@ class EnvironmentScheduleController {
     DateTime? from,
     List<EnvironmentSchedule>? schedules,
   }) {
+    if (pausedNotifier.value) {
+      return null;
+    }
     final reference = from ?? DateTime.now();
     final source = schedules ?? schedulesNotifier.value;
     EnvironmentScheduleOccurrence? best;
@@ -92,8 +109,32 @@ class EnvironmentScheduleController {
     return best;
   }
 
+  List<EnvironmentScheduleOccurrence> forecast({
+    int limit = 6,
+    DateTime? from,
+    List<EnvironmentSchedule>? schedules,
+  }) {
+    if (pausedNotifier.value || limit <= 0) {
+      return const <EnvironmentScheduleOccurrence>[];
+    }
+    final results = <EnvironmentScheduleOccurrence>[];
+    var reference = from ?? DateTime.now();
+    var guard = 0;
+    while (results.length < limit && guard < limit * 4) {
+      final next = nextOccurrence(from: reference, schedules: schedules);
+      if (next == null) {
+        break;
+      }
+      results.add(next);
+      reference = next.occursAt.add(const Duration(minutes: 1));
+      guard++;
+    }
+    return results;
+  }
+
   void dispose() {
     schedulesNotifier.dispose();
+    pausedNotifier.dispose();
   }
 
   Future<SharedPreferences> _ensurePrefs() async {
@@ -108,6 +149,7 @@ class EnvironmentScheduleController {
     final prefs = await _ensurePrefs();
     final payload = schedulesNotifier.value.map((schedule) => schedule.toJson()).toList();
     await prefs.setString(_storageKey, jsonEncode(payload));
+    await prefs.setBool(_pausedStorageKey, pausedNotifier.value);
   }
 
   void _emit(List<EnvironmentSchedule> schedules) {

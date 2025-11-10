@@ -243,11 +243,17 @@ class _HomePageState extends State<HomePage> {
                     ValueListenableBuilder<List<EnvironmentSchedule>>(
                       valueListenable: scheduleController.schedulesNotifier,
                       builder: (context, schedules, _) {
-                        return _buildScheduleOverview(
-                          context,
-                          environment,
-                          scheduleController,
-                          schedules,
+                        return ValueListenableBuilder<bool>(
+                          valueListenable: scheduleController.pausedNotifier,
+                          builder: (context, paused, __) {
+                            return _buildScheduleOverview(
+                              context,
+                              environment,
+                              scheduleController,
+                              schedules,
+                              paused,
+                            );
+                          },
                         );
                       },
                     ),
@@ -604,6 +610,7 @@ class _HomePageState extends State<HomePage> {
     EnvironmentController environment,
     EnvironmentScheduleController scheduleController,
     List<EnvironmentSchedule> schedules,
+    bool paused,
   ) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
@@ -685,14 +692,18 @@ class _HomePageState extends State<HomePage> {
             ),
           ] else if (hasSchedules) ...[
             Text(
-              l10n.getString('scheduleUpcomingPaused'),
+              paused
+                  ? l10n.getString('scheduleUpcomingPaused')
+                  : l10n.getString('scheduleUpcomingInactive'),
               style: context.textTheme.bodyLarge,
             ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.getString('homeSchedulesSubtitle'),
-              style: context.textTheme.bodyMedium,
-            ),
+            if (!paused) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.getString('homeSchedulesSubtitle'),
+                style: context.textTheme.bodyMedium,
+              ),
+            ],
           ] else ...[
             Text(
               l10n.getString('homeSchedulesEmpty'),
@@ -700,11 +711,22 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
           const SizedBox(height: 16),
-          TextButton.icon(
-            onPressed: () =>
-                Navigator.of(context).pushNamed('/environment-schedules'),
-            icon: const Icon(Icons.tune),
-            label: Text(l10n.getString('scheduleManageCta')),
+          Row(
+            children: [
+              if (paused)
+                TextButton.icon(
+                  onPressed: () => scheduleController.setPaused(false),
+                  icon: const Icon(Icons.play_arrow),
+                  label: Text(l10n.getString('scheduleGlobalResume')),
+                ),
+              if (paused) const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/environment-schedules'),
+                icon: const Icon(Icons.tune),
+                label: Text(l10n.getString('scheduleManageCta')),
+              ),
+            ],
           ),
         ],
       ),

@@ -8,6 +8,23 @@ import '../../shared/models/environment_schedule.dart';
 import '../../shared/utils/schedule_formatter.dart';
 import '../../shared/widgets/primary_button.dart';
 
+String _sceneNameFor(
+  BuildContext context,
+  EnvironmentController environment,
+  String id,
+) {
+  final l10n = context.l10n;
+  final scenes = environment.scenes;
+  final match = scenes.where((scene) => scene.id == id);
+  if (match.isNotEmpty) {
+    return l10n.getString(match.first.titleKey);
+  }
+  if (scenes.isNotEmpty) {
+    return l10n.getString(scenes.first.titleKey);
+  }
+  return id;
+}
+
 class EnvironmentSchedulePage extends StatefulWidget {
   const EnvironmentSchedulePage({super.key});
 
@@ -45,47 +62,86 @@ class _EnvironmentSchedulePageState extends State<EnvironmentSchedulePage> {
               style: context.textTheme.bodyMedium,
             ),
             const SizedBox(height: 24),
+            ValueListenableBuilder<bool>(
+              valueListenable: scheduleController.pausedNotifier,
+              builder: (context, paused, _) {
+                return _GlobalAutomationCard(
+                  paused: paused,
+                  controller: scheduleController,
+                );
+              },
+            ),
+            const SizedBox(height: 24),
             Expanded(
               child: ValueListenableBuilder<List<EnvironmentSchedule>>(
                 valueListenable: scheduleController.schedulesNotifier,
                 builder: (context, schedules, _) {
-                  if (schedules.isEmpty) {
-                    return _EmptyScheduleState(
-                      onAdd: () => _showScheduleSheet(
-                        context,
-                        environmentController,
-                        scheduleController,
-                      ),
-                    );
-                  }
-                  return ListView.separated(
-                    itemCount: schedules.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 16),
-                    itemBuilder: (context, index) {
-                      final schedule = schedules[index];
-                      return _ScheduleCard(
-                        schedule: schedule,
-                        environment: environmentController,
-                        scheduleController: scheduleController,
-                        onEdit: () => _showScheduleSheet(
-                          context,
-                          environmentController,
-                          scheduleController,
-                          existing: schedule,
-                        ),
-                        onDelete: () => _confirmDelete(
-                          context,
-                          scheduleController,
-                          schedule.id,
-                        ),
-                        onApply: () {
-                          environmentController.applyScene(schedule.sceneId);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(l10n.getString('scheduleApplyNow')),
+                  return ValueListenableBuilder<bool>(
+                    valueListenable: scheduleController.pausedNotifier,
+                    builder: (context, paused, __) {
+                      if (schedules.isEmpty) {
+                        return _EmptyScheduleState(
+                          onAdd: () => _showScheduleSheet(
+                            context,
+                            environmentController,
+                            scheduleController,
+                          ),
+                        );
+                      }
+                      final timeline = paused
+                          ? const <EnvironmentScheduleOccurrence>[]
+                          : scheduleController.forecast(
+                              schedules: schedules,
+                            );
+                      final children = <Widget>[];
+                      if (timeline.isNotEmpty) {
+                        children
+                          ..add(
+                            _UpcomingTimeline(
+                              environment: environmentController,
+                              occurrences: timeline,
                             ),
-                          );
-                        },
+                          )
+                          ..add(const SizedBox(height: 16));
+                      }
+                      for (final schedule in schedules) {
+                        children
+                          ..add(
+                            _ScheduleCard(
+                              schedule: schedule,
+                              environment: environmentController,
+                              scheduleController: scheduleController,
+                              masterPaused: paused,
+                              onEdit: () => _showScheduleSheet(
+                                context,
+                                environmentController,
+                                scheduleController,
+                                existing: schedule,
+                              ),
+                              onDelete: () => _confirmDelete(
+                                context,
+                                scheduleController,
+                                schedule.id,
+                              ),
+                              onApply: () {
+                                environmentController.applyScene(schedule.sceneId);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      l10n.getString('scheduleApplyNow'),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                          ..add(const SizedBox(height: 16));
+                      }
+                      if (children.isNotEmpty) {
+                        children.removeLast();
+                      }
+                      return ListView(
+                        children: children,
                       );
                     },
                   );
@@ -361,6 +417,184 @@ class _EnvironmentSchedulePageState extends State<EnvironmentSchedulePage> {
   }
 }
 
+class _GlobalAutomationCard extends StatelessWidget {
+  const _GlobalAutomationCard({
+    required this.paused,
+    required this.controller,
+  });
+
+  final bool paused;
+  final EnvironmentScheduleController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final subtle = context.textTheme.bodySmall?.color?.withOpacity(0.6);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color:
+              theme.colorScheme.primary.withOpacity(context.isDarkMode ? 0.25 : 0.12),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.getString(paused
+                          ? 'scheduleGlobalTitlePaused'
+                          : 'scheduleGlobalTitleActive'),
+                      style: context.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.getString(paused
+                          ? 'scheduleGlobalSubtitlePaused'
+                          : 'scheduleGlobalSubtitleActive'),
+                      style: context.textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+              Switch.adaptive(
+                value: !paused,
+                onChanged: (value) => controller.setPaused(!value),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.getString('scheduleGlobalToggleLabel'),
+            style: context.textTheme.bodySmall?.copyWith(color: subtle),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UpcomingTimeline extends StatelessWidget {
+  const _UpcomingTimeline({
+    required this.environment,
+    required this.occurrences,
+  });
+
+  final EnvironmentController environment;
+  final List<EnvironmentScheduleOccurrence> occurrences;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final subtle = context.textTheme.bodySmall?.color?.withOpacity(0.6);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.getString('scheduleTimelineTitle'),
+          style: context.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 170,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: occurrences.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final occurrence = occurrences[index];
+              final timeLabel = MaterialLocalizations.of(context)
+                  .formatTimeOfDay(TimeOfDay.fromDateTime(occurrence.occursAt));
+              final dateLabel = MaterialLocalizations.of(context)
+                  .formatMediumDate(occurrence.occursAt);
+              final dayLabel = ScheduleFormatter.labelForWeekday(
+                l10n,
+                occurrence.occursAt.weekday,
+              );
+              final sceneName = _sceneNameFor(
+                context,
+                environment,
+                occurrence.schedule.sceneId,
+              );
+              return Container(
+                width: 220,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: theme.colorScheme.primary
+                        .withOpacity(context.isDarkMode ? 0.2 : 0.1),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      dayLabel,
+                      style: context.textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      dateLabel,
+                      style: context.textTheme.bodySmall?.copyWith(color: subtle),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      sceneName,
+                      style: context.textTheme.titleMedium,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          size: 18,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          timeLabel,
+                          style: context.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.getString('scheduleUpcomingSwitch')
+                          .replaceFirst('{scene}', sceneName)
+                          .replaceFirst('{time}', timeLabel),
+                      style: context.textTheme.bodyMedium,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _ScheduleCard extends StatelessWidget {
   const _ScheduleCard({
     required this.schedule,
@@ -369,6 +603,7 @@ class _ScheduleCard extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onApply,
+    this.masterPaused = false,
   });
 
   final EnvironmentSchedule schedule;
@@ -377,15 +612,19 @@ class _ScheduleCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onApply;
+  final bool masterPaused;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final sceneName = _resolveSceneName(context, schedule.sceneId);
+    final sceneName = _sceneNameFor(context, environment, schedule.sceneId);
     final timeLabel = MaterialLocalizations.of(context)
         .formatTimeOfDay(schedule.timeOfDay);
     final daysLabel = ScheduleFormatter.describeDays(l10n, schedule);
+    final statusLabel = schedule.enabled
+        ? l10n.getString('scheduleStatusActive')
+        : l10n.getString('scheduleStatusPaused');
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
@@ -436,15 +675,16 @@ class _ScheduleCard extends StatelessWidget {
                     avatar: const Icon(Icons.calendar_today, size: 16),
                   ),
                   Chip(
-                    label: Text(
-                      schedule.enabled
-                          ? l10n.getString('scheduleStatusActive')
-                          : l10n.getString('scheduleStatusPaused'),
-                    ),
+                    label: Text(statusLabel),
                     backgroundColor: schedule.enabled
                         ? theme.colorScheme.primary.withOpacity(0.15)
                         : theme.colorScheme.surfaceVariant,
                   ),
+                  if (masterPaused && schedule.enabled)
+                    Chip(
+                      label: Text(l10n.getString('scheduleStatusMasterPaused')),
+                      backgroundColor: theme.colorScheme.surfaceVariant,
+                    ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -474,19 +714,6 @@ class _ScheduleCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _resolveSceneName(BuildContext context, String id) {
-    final l10n = context.l10n;
-    final scenes = environment.scenes;
-    final match = scenes.where((scene) => scene.id == id);
-    if (match.isNotEmpty) {
-      return l10n.getString(match.first.titleKey);
-    }
-    if (scenes.isNotEmpty) {
-      return l10n.getString(scenes.first.titleKey);
-    }
-    return id;
   }
 }
 

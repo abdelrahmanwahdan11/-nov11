@@ -61,4 +61,28 @@ void main() {
     expect(next, isNotNull);
     expect(next!.schedule.id, equals(custom.id));
   });
+
+  test('pausing schedules hides occurrences and persists state', () async {
+    expect(scheduleController.pausedNotifier.value, isFalse);
+
+    await scheduleController.setPaused(true);
+    expect(scheduleController.pausedNotifier.value, isTrue);
+    expect(scheduleController.nextOccurrence(), isNull);
+    expect(scheduleController.forecast(), isEmpty);
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('environmentSchedulesPaused'), isTrue);
+
+    await scheduleController.setPaused(false);
+    expect(scheduleController.pausedNotifier.value, isFalse);
+    expect(scheduleController.nextOccurrence(), isNotNull);
+  });
+
+  test('forecast returns ordered upcoming occurrences within limit', () async {
+    final results = scheduleController.forecast(limit: 3);
+    expect(results.length, lessThanOrEqualTo(3));
+    for (var i = 1; i < results.length; i++) {
+      expect(results[i].occursAt.isAfter(results[i - 1].occursAt), isTrue);
+    }
+  });
 }
