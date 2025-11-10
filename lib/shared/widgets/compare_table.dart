@@ -5,9 +5,16 @@ import '../models/product.dart';
 import '../controllers/compare_controller.dart';
 
 class CompareTable extends StatelessWidget {
-  const CompareTable({super.key, required this.controller});
+  const CompareTable({
+    super.key,
+    required this.controller,
+    required this.differencesOnly,
+    required this.highlightDifferences,
+  });
 
   final CompareController controller;
+  final bool differencesOnly;
+  final bool highlightDifferences;
 
   @override
   Widget build(BuildContext context) {
@@ -17,22 +24,42 @@ class CompareTable extends StatelessWidget {
         if (items.isEmpty) {
           return Center(
             child: Text(
-              'No items yet',
+              context.l10n.getString('emptyCompare'),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           );
         }
         final matrix = controller.comparisonMatrix;
-        final rows = matrix.entries.map((entry) {
-          final title = _localizeKey(context, entry.key);
+        final rows = <DataRow>[];
+        matrix.forEach((key, value) {
+          final hasDifference = _hasDifference(value);
+          if (differencesOnly && !hasDifference) {
+            return;
+          }
+          final title = _localizeKey(context, key);
+          final rowColor = highlightDifferences && hasDifference
+              ? MaterialStateProperty.all(
+                  Theme.of(context)
+                      .colorScheme
+                      .secondaryContainer
+                      .withOpacity(0.45),
+                )
+              : null;
           final cells = <DataCell>[
             DataCell(Text(title, style: Theme.of(context).textTheme.bodyMedium)),
           ];
-          cells.addAll(entry.value.map(
-            (value) => DataCell(Text(value ?? '-', textAlign: TextAlign.center)),
-          ));
-          return DataRow(cells: cells);
-        }).toList();
+          for (final cell in value) {
+            cells.add(
+              DataCell(
+                Text(
+                  cell ?? '-',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
+          rows.add(DataRow(color: rowColor, cells: cells));
+        });
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
@@ -41,12 +68,32 @@ class CompareTable extends StatelessWidget {
             ),
             columns: [
               DataColumn(label: Text(context.l10n.getString('specifications'))),
-              ...items.map((product) => DataColumn(
-                    label: SizedBox(
-                      width: 120,
-                      child: Text(product.name, textAlign: TextAlign.center),
+              ...List.generate(items.length, (index) {
+                final product = items[index];
+                return DataColumn(
+                  label: SizedBox(
+                    width: 140,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          product.name,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        IconButton(
+                          iconSize: 18,
+                          padding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                          tooltip: context.l10n.getString('remove'),
+                          onPressed: () => controller.removeProduct(product.id),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
                     ),
-                  )),
+                  ),
+                );
+              }),
             ],
             rows: rows,
           ),
@@ -70,4 +117,9 @@ String _localizeKey(BuildContext context, String key) {
     default:
       return key;
   }
+}
+
+bool _hasDifference(List<String?> values) {
+  final normalized = values.map((value) => value ?? '').toSet();
+  return normalized.length > 1;
 }

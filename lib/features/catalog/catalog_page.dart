@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app_scope.dart';
+import '../../core/l10n/app_localizations.dart';
 import '../../core/utils/context_extensions.dart';
 import '../../shared/controllers/catalog_controller.dart';
 import '../../shared/models/product.dart';
@@ -67,16 +68,99 @@ class _CatalogPageState extends State<CatalogPage> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
-                hintText: l10n.getString('searchPlaceholder'),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
-              ),
-              onSubmitted: (value) {
-                Navigator.of(context).pushNamed('/search', arguments: value);
-              },
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: l10n.getString('searchPlaceholder'),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
+                  ),
+                  onSubmitted: (value) {
+                    Navigator.of(context).pushNamed('/search', arguments: value);
+                  },
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: ValueListenableBuilder<String>(
+                        valueListenable: catalog.sortNotifier,
+                        builder: (context, sortKey, _) {
+                          if (sortKey.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+                          return Align(
+                            alignment: Alignment.centerLeft,
+                            child: InputChip(
+                              label: Text(
+                                l10n.getString('sortedBy') +
+                                    ': ' +
+                                    _sortLabel(l10n, sortKey),
+                              ),
+                              onDeleted: () => catalog.updateSort(''),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        catalog.clearFilters();
+                        catalog.updateSort('');
+                      },
+                      child: Text(l10n.getString('resetAll')),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ValueListenableBuilder<Map<String, dynamic>>(
+                  valueListenable: catalog.filtersNotifier,
+                  builder: (context, filters, _) {
+                    final chips =
+                        _buildActiveFilterChips(context, filters, catalog);
+                    if (chips.isEmpty) {
+                      return Text(
+                        l10n.getString('filtersEmptyHint'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      );
+                    }
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: chips,
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                ValueListenableBuilder<Map<String, dynamic>>(
+                  valueListenable: catalog.filtersNotifier,
+                  builder: (context, filters, _) {
+                    final quickTags = catalog.quickTagSuggestions(limit: 6);
+                    if (quickTags.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: quickTags
+                          .map(
+                            (tag) => FilterChip(
+                              label: Text(tag),
+                              selected: (filters['tags'] as List<String>? ?? [])
+                                  .contains(tag),
+                              onSelected: (_) => catalog.toggleTag(tag),
+                            ),
+                          )
+                          .toList(),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
           ),
           Expanded(
@@ -179,11 +263,16 @@ class _CatalogPageState extends State<CatalogPage> {
 
   Future<Map<String, dynamic>?> _showFilterSheet(BuildContext context) async {
     final l10n = context.l10n;
-    RangeValues range = const RangeValues(100, 600);
-    RangeValues powerRange = const RangeValues(10, 70);
-    RangeValues noiseRange = const RangeValues(10, 40);
-    String hepa = '';
-    final tags = <String>{};
+    final catalog = AppScope.of(context).catalogController;
+    final current = catalog.filtersNotifier.value;
+    RangeValues range = current['priceRange'] as RangeValues? ?? catalog.priceDomain;
+    RangeValues powerRange =
+        current['powerRange'] as RangeValues? ?? catalog.powerDomain;
+    RangeValues noiseRange =
+        current['noiseRange'] as RangeValues? ?? catalog.noiseDomain;
+    String hepa = current['hepaClass'] as String? ?? '';
+    double rating = current['ratingMin'] as double? ?? 0;
+    final tags = <String>{...(current['tags'] as List<String>? ?? [])};
     return showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
@@ -191,107 +280,229 @@ class _CatalogPageState extends State<CatalogPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-            top: 24,
-            left: 24,
-            right: 24,
-          ),
-          child: StatefulBuilder(
-            builder: (context, setModalState) {
-              return Column(
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                top: 24,
+                left: 24,
+                right: 24,
+              ),
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l10n.getString('filters'), style: context.textTheme.headlineMedium),
-                  const SizedBox(height: 16),
-                  Text(l10n.getString('price')),
-                  RangeSlider(
-                    values: range,
-                    min: 100,
-                    max: 600,
-                    onChanged: (value) => setModalState(() => range = value),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(l10n.getString('power')),
-                  RangeSlider(
-                    values: powerRange,
-                    min: 10,
-                    max: 80,
-                    divisions: 7,
-                    labels: RangeLabels(
-                      powerRange.start.toStringAsFixed(0),
-                      powerRange.end.toStringAsFixed(0),
-                    ),
-                    onChanged: (value) => setModalState(() => powerRange = value),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(l10n.getString('noise')),
-                  RangeSlider(
-                    values: noiseRange,
-                    min: 10,
-                    max: 40,
-                    divisions: 6,
-                    labels: RangeLabels(
-                      noiseRange.start.toStringAsFixed(0),
-                      noiseRange.end.toStringAsFixed(0),
-                    ),
-                    onChanged: (value) => setModalState(() => noiseRange = value),
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: hepa.isEmpty ? null : hepa,
-                    decoration: InputDecoration(labelText: l10n.getString('hepaClass')),
-                    items: const [
-                      DropdownMenuItem(value: 'H11', child: Text('H11')),
-                      DropdownMenuItem(value: 'H13', child: Text('H13')),
-                    ],
-                    onChanged: (value) => setModalState(() => hepa = value ?? ''),
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      'HEPA',
-                      'oscillation',
-                      'Hybrid',
-                    ].map((tag) {
-                      final selected = tags.contains(tag);
-                      return FilterChip(
-                        label: Text(tag),
-                        selected: selected,
-                        onSelected: (value) {
+                      Text(l10n.getString('filters'),
+                          style: context.textTheme.headlineMedium),
+                      TextButton(
+                        onPressed: () {
                           setModalState(() {
-                            if (value) {
-                              tags.add(tag);
-                            } else {
-                              tags.remove(tag);
-                            }
+                            range = catalog.priceDomain;
+                            powerRange = catalog.powerDomain;
+                            noiseRange = catalog.noiseDomain;
+                            hepa = '';
+                            rating = 0;
+                            tags.clear();
                           });
                         },
-                      );
-                    }).toList(),
+                        child: Text(l10n.getString('clear')),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(l10n.getString('priceRange')),
+                  RangeSlider(
+                    values: range,
+                    min: catalog.priceDomain.start,
+                    max: catalog.priceDomain.end,
+                    onChanged: (value) => setModalState(() => range = value),
+                  ),
+                  Text('${range.start.toStringAsFixed(0)} - ${range.end.toStringAsFixed(0)}'),
+                  const SizedBox(height: 16),
+                  Text(l10n.getString('powerRange')),
+                  RangeSlider(
+                    values: powerRange,
+                    min: catalog.powerDomain.start,
+                    max: catalog.powerDomain.end,
+                    onChanged: (value) => setModalState(() => powerRange = value),
+                  ),
+                  Text(
+                    '${powerRange.start.toStringAsFixed(0)}W - ${powerRange.end.toStringAsFixed(0)}W',
+                  ),
+                  const SizedBox(height: 16),
+                  Text(l10n.getString('noiseRange')),
+                  RangeSlider(
+                    values: noiseRange,
+                    min: catalog.noiseDomain.start,
+                    max: catalog.noiseDomain.end,
+                    onChanged: (value) => setModalState(() => noiseRange = value),
+                  ),
+                  Text(
+                    '${noiseRange.start.toStringAsFixed(0)} dB - ${noiseRange.end.toStringAsFixed(0)} dB',
+                  ),
+                  const SizedBox(height: 16),
+                  Text(l10n.getString('ratingAbove')),
+                  Slider(
+                    value: rating,
+                    min: 0,
+                    max: 5,
+                    divisions: 10,
+                    label: rating == 0
+                        ? l10n.getString('any')
+                        : rating.toStringAsFixed(1),
+                    onChanged: (value) => setModalState(() => rating = value),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(l10n.getString('hepaClass')),
+                  Wrap(
+                    spacing: 8,
+                    children: catalog.availableHepaClasses
+                        .map(
+                          (className) => ChoiceChip(
+                            label: Text(className),
+                            selected: hepa == className,
+                            onSelected: (value) => setModalState(
+                              () => hepa = value ? className : '',
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(l10n.getString('tags')),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: catalog.availableTags
+                        .map(
+                          (tag) => FilterChip(
+                            label: Text(tag),
+                            selected: tags.contains(tag),
+                            onSelected: (value) => setModalState(() {
+                              if (value) {
+                                tags.add(tag);
+                              } else {
+                                tags.remove(tag);
+                              }
+                            }),
+                          ),
+                        )
+                        .toList(),
                   ),
                   const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop({
-                        'priceRange': range,
-                        'powerRange': powerRange,
-                        'noiseRange': noiseRange,
-                        'hepaClass': hepa,
-                        'tags': tags.toList(),
-                      });
-                    },
-                    child: Text(l10n.getString('apply')),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop({
+                          'priceRange': range,
+                          'powerRange': powerRange,
+                          'noiseRange': noiseRange,
+                          if (hepa.isNotEmpty) 'hepaClass': hepa,
+                          if (rating > 0) 'ratingMin': rating,
+                          if (tags.isNotEmpty) 'tags': tags.toList(),
+                        });
+                      },
+                      child: Text(l10n.getString('apply')),
+                    ),
                   ),
                 ],
-              );
-            },
-          ),
+              ),
+            );
+          },
         );
       },
     );
+  }
+
+  List<Widget> _buildActiveFilterChips(
+    BuildContext context,
+    Map<String, dynamic> filters,
+    CatalogController controller,
+  ) {
+    final l10n = context.l10n;
+    final chips = <Widget>[];
+    final tags = filters['tags'] as List<String>? ?? [];
+    for (final tag in tags) {
+      chips.add(
+        InputChip(
+          label: Text(tag),
+          onDeleted: () => controller.toggleTag(tag),
+        ),
+      );
+    }
+    final hepa = filters['hepaClass'] as String?;
+    if (hepa != null && hepa.isNotEmpty) {
+      chips.add(
+        InputChip(
+          label: Text('${l10n.getString('hepaClass')} $hepa'),
+          onDeleted: () => controller.removeFilter('hepaClass'),
+        ),
+      );
+    }
+    final priceRange = filters['priceRange'] as RangeValues?;
+    if (priceRange != null) {
+      chips.add(
+        InputChip(
+          label: Text(
+            '${l10n.getString('price')} ${priceRange.start.toStringAsFixed(0)}-${priceRange.end.toStringAsFixed(0)}',
+          ),
+          onDeleted: () => controller.removeFilter('priceRange'),
+        ),
+      );
+    }
+    final powerRange = filters['powerRange'] as RangeValues?;
+    if (powerRange != null) {
+      chips.add(
+        InputChip(
+          label: Text(
+            '${l10n.getString('power')} ${powerRange.start.toStringAsFixed(0)}-${powerRange.end.toStringAsFixed(0)}W',
+          ),
+          onDeleted: () => controller.removeFilter('powerRange'),
+        ),
+      );
+    }
+    final noiseRange = filters['noiseRange'] as RangeValues?;
+    if (noiseRange != null) {
+      chips.add(
+        InputChip(
+          label: Text(
+            '${l10n.getString('noise')} ${noiseRange.start.toStringAsFixed(0)}-${noiseRange.end.toStringAsFixed(0)} dB',
+          ),
+          onDeleted: () => controller.removeFilter('noiseRange'),
+        ),
+      );
+    }
+    final ratingMin = filters['ratingMin'] as double?;
+    if (ratingMin != null && ratingMin > 0) {
+      chips.add(
+        InputChip(
+          label: Text(
+            '${l10n.getString('rating')} ≥ ${ratingMin.toStringAsFixed(1)}',
+          ),
+          onDeleted: () => controller.removeFilter('ratingMin'),
+        ),
+      );
+    }
+    return chips;
+  }
+
+  String _sortLabel(AppLocalizations l10n, String key) {
+    switch (key) {
+      case 'price_low_high':
+        return l10n.getString('priceLowHigh');
+      case 'price_high_low':
+        return l10n.getString('priceHighLow');
+      case 'rating_desc':
+        return l10n.getString('ratingDesc');
+      case 'name_asc':
+        return l10n.getString('nameAsc');
+      default:
+        return l10n.getString('sort');
+    }
   }
 }

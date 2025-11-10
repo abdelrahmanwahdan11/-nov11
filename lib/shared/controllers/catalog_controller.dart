@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -10,11 +11,26 @@ class CatalogController {
     productsNotifier = ValueNotifier<List<Product>>([]);
     filtersNotifier = ValueNotifier<Map<String, dynamic>>({});
     sortNotifier = ValueNotifier<String>('');
+    _availableTags = {
+      for (final product in mockProducts) ...product.tags,
+    }.toList()
+      ..sort();
+    _availableHepaClasses = {
+      for (final product in mockProducts)
+        if (product.hepaClass != null) product.hepaClass!,
+    }.toList()
+      ..sort();
   }
 
   late final ValueNotifier<List<Product>> productsNotifier;
   late final ValueNotifier<Map<String, dynamic>> filtersNotifier;
   late final ValueNotifier<String> sortNotifier;
+  late final List<String> _availableTags;
+  late final List<String> _availableHepaClasses;
+
+  List<String> get availableTags => _availableTags;
+
+  List<String> get availableHepaClasses => _availableHepaClasses;
 
   static const int pageSize = 10;
   int _page = 0;
@@ -53,11 +69,77 @@ class CatalogController {
   }
 
   void updateFilters(Map<String, dynamic> filters) {
-    filtersNotifier.value = filters;
+    filtersNotifier.value = {...filters};
   }
 
   void updateSort(String sort) {
     sortNotifier.value = sort;
+  }
+
+  void clearFilters() {
+    filtersNotifier.value = {};
+  }
+
+  void removeFilter(String key) {
+    final filters = {...filtersNotifier.value};
+    filters.remove(key);
+    filtersNotifier.value = filters;
+  }
+
+  void toggleTag(String tag) {
+    final filters = {...filtersNotifier.value};
+    final tags = (filters['tags'] as List<String>? ?? <String>[]).toList();
+    if (tags.contains(tag)) {
+      tags.remove(tag);
+    } else {
+      tags.add(tag);
+    }
+    if (tags.isEmpty) {
+      filters.remove('tags');
+    } else {
+      filters['tags'] = tags;
+    }
+    filtersNotifier.value = filters;
+  }
+
+  List<String> quickTagSuggestions({int limit = 6}) {
+    if (_availableTags.length <= limit) {
+      return _availableTags;
+    }
+    return _availableTags.sublist(0, limit);
+  }
+
+  RangeValues get priceDomain {
+    final prices = mockProducts.map((product) => product.price).toList();
+    final minPrice = prices.reduce(math.min);
+    final maxPrice = prices.reduce(math.max);
+    return RangeValues(minPrice, maxPrice);
+  }
+
+  RangeValues get powerDomain {
+    final values = mockProducts
+        .map((product) => product.powerW?.toDouble())
+        .whereType<double>()
+        .toList();
+    if (values.isEmpty) {
+      return const RangeValues(0, 100);
+    }
+    final minPower = values.reduce(math.min);
+    final maxPower = values.reduce(math.max);
+    return RangeValues(minPower, maxPower);
+  }
+
+  RangeValues get noiseDomain {
+    final values = mockProducts
+        .map((product) => product.noiseLevelDb?.toDouble())
+        .whereType<double>()
+        .toList();
+    if (values.isEmpty) {
+      return const RangeValues(0, 60);
+    }
+    final minNoise = values.reduce(math.min);
+    final maxNoise = values.reduce(math.max);
+    return RangeValues(minNoise, maxNoise);
   }
 
   List<Product> applyFilters(List<Product> items) {
@@ -94,6 +176,11 @@ class CatalogController {
               p.noiseLevelDb! >= noiseRange.start &&
               p.noiseLevelDb! <= noiseRange.end)
           .toList();
+    }
+    final ratingMin = filters['ratingMin'] as double?;
+    if (ratingMin != null) {
+      filtered =
+          filtered.where((product) => product.rating >= ratingMin).toList();
     }
     return _applySort(filtered);
   }
