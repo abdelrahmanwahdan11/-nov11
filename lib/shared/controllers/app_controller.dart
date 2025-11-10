@@ -15,49 +15,115 @@ class AppController {
   late final ValueNotifier<AppPrefs> prefsNotifier;
   late final ValueNotifier<User?> userNotifier;
 
+  SharedPreferences? _prefs;
+
   Future<void> loadPrefs() async {
-    final pref = await SharedPreferences.getInstance();
-    final colorValue = pref.getInt('primaryColor');
-    final darkMode = pref.getBool('darkMode');
-    final localeCode = pref.getString('localeCode');
+    final prefs = await _ensurePrefs();
+    final primaryHex = prefs.getString('primaryColorHex');
+    final color = primaryHex != null ? _colorFromHex(primaryHex) : AppPrefs.defaults().primaryColor;
+    final darkMode = prefs.getBool('isDark') ?? false;
+    final localeCode = prefs.getString('locale') ?? 'en';
+    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    final isGuest = prefs.getBool('isGuest') ?? false;
+    final onboardingSeen = prefs.getBool('onboardingSeen') ?? false;
+    final storedName = prefs.getString('userName');
+    final name = storedName != null && storedName.isNotEmpty ? storedName : null;
+
     prefsNotifier.value = AppPrefs.defaults().copyWith(
-      primaryColor: colorValue != null ? Color(colorValue) : null,
+      primaryColor: color,
       darkMode: darkMode,
       localeCode: localeCode,
+      isLoggedIn: isLoggedIn,
+      isGuest: isGuest,
+      onboardingSeen: onboardingSeen,
+      userName: name,
     );
+
+    if (isLoggedIn || isGuest) {
+      userNotifier.value = User(
+        id: isGuest ? null : 'local-user',
+        name: name,
+        guest: isGuest,
+      );
+    }
   }
 
   Future<void> updateColor(Color color) async {
-    final pref = await SharedPreferences.getInstance();
-    await pref.setInt('primaryColor', color.value);
+    final prefs = await _ensurePrefs();
+    await prefs.setString('primaryColorHex', _colorToHex(color));
     prefsNotifier.value = prefsNotifier.value.copyWith(primaryColor: color);
   }
 
   Future<void> updateDarkMode(bool dark) async {
-    final pref = await SharedPreferences.getInstance();
-    await pref.setBool('darkMode', dark);
+    final prefs = await _ensurePrefs();
+    await prefs.setBool('isDark', dark);
     prefsNotifier.value = prefsNotifier.value.copyWith(darkMode: dark);
   }
 
   Future<void> updateLocale(String code) async {
-    final pref = await SharedPreferences.getInstance();
-    await pref.setString('localeCode', code);
+    final prefs = await _ensurePrefs();
+    await prefs.setString('locale', code);
     prefsNotifier.value = prefsNotifier.value.copyWith(localeCode: code);
   }
 
-  Future<void> clearPrefs() async {
-    final pref = await SharedPreferences.getInstance();
-    await pref.remove('primaryColor');
-    await pref.remove('darkMode');
-    await pref.remove('localeCode');
-    prefsNotifier.value = AppPrefs.defaults();
+  Future<void> markOnboardingSeen() async {
+    final prefs = await _ensurePrefs();
+    await prefs.setBool('onboardingSeen', true);
+    prefsNotifier.value = prefsNotifier.value.copyWith(onboardingSeen: true);
   }
 
-  void setUser(User user) {
+  Future<void> setUser(User user) async {
+    final prefs = await _ensurePrefs();
+    await prefs.setBool('isGuest', user.guest);
+    await prefs.setBool('isLoggedIn', !user.guest);
+    await prefs.setString('userName', user.name ?? '');
     userNotifier.value = user;
+    prefsNotifier.value = prefsNotifier.value.copyWith(
+      isGuest: user.guest,
+      isLoggedIn: !user.guest,
+      userName: user.name,
+    );
   }
 
-  void signOut() {
+  Future<void> signOut() async {
+    final prefs = await _ensurePrefs();
+    await prefs.setBool('isGuest', false);
+    await prefs.setBool('isLoggedIn', false);
+    await prefs.remove('userName');
+    userNotifier.value = null;
+    prefsNotifier.value = prefsNotifier.value.copyWith(
+      isGuest: false,
+      isLoggedIn: false,
+      clearUserName: true,
+    );
+  }
+
+  Future<void> clearPrefs() async {
+    final prefs = await _ensurePrefs();
+    await prefs.remove('primaryColorHex');
+    await prefs.remove('isDark');
+    await prefs.remove('locale');
+    await prefs.remove('isLoggedIn');
+    await prefs.remove('isGuest');
+    await prefs.remove('onboardingSeen');
+    await prefs.remove('userName');
+    prefsNotifier.value = AppPrefs.defaults();
     userNotifier.value = null;
   }
+
+  Future<SharedPreferences> _ensurePrefs() async {
+    if (_prefs != null) {
+      return _prefs!;
+    }
+    _prefs = await SharedPreferences.getInstance();
+    return _prefs!;
+  }
+
+  Color _colorFromHex(String hex) {
+    final sanitized = hex.replaceFirst('#', '').replaceFirst('0x', '');
+    final normalized = sanitized.length == 6 ? 'ff$sanitized' : sanitized;
+    return Color(int.parse(normalized, radix: 16));
+  }
+
+  String _colorToHex(Color color) => color.value.toRadixString(16).padLeft(8, '0');
 }

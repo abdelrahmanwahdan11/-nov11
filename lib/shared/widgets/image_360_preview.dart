@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'smart_network_image.dart';
+
 class Image360Preview extends StatefulWidget {
   const Image360Preview({super.key, required this.frames});
 
@@ -53,7 +55,7 @@ class _Image360PreviewState extends State<Image360Preview> {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(28),
-                child: Image.network(url, fit: BoxFit.cover),
+                child: SmartNetworkImage(imageUrl: url, fit: BoxFit.cover),
               ),
             );
           },

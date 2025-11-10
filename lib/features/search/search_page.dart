@@ -22,8 +22,8 @@ class _SearchPageState extends State<SearchPage> {
   late final SearchController _controller;
   final TextEditingController _query = TextEditingController();
   late final ValueNotifier<Map<String, dynamic>> _filters;
-  Timer? _debounce;
   String _selectedCategory = '';
+  String _selectedSort = 'relevance';
 
   @override
   void initState() {
@@ -47,7 +47,6 @@ class _SearchPageState extends State<SearchPage> {
     _controller.dispose();
     _query.dispose();
     _filters.dispose();
-    _debounce?.cancel();
     super.dispose();
   }
 
@@ -56,6 +55,13 @@ class _SearchPageState extends State<SearchPage> {
     final favorites = AppScope.of(context).favoritesController;
     final catalog = AppScope.of(context).catalogController;
     final l10n = context.l10n;
+    final sortOptions = <String, String>{
+      'relevance': l10n.getString('relevance'),
+      'price_low_high': l10n.getString('priceLowHigh'),
+      'price_high_low': l10n.getString('priceHighLow'),
+      'rating_desc': l10n.getString('ratingDesc'),
+      'name_asc': l10n.getString('nameAsc'),
+    };
     return Scaffold(
       appBar: AppBar(
         title: TextField(
@@ -162,6 +168,43 @@ class _SearchPageState extends State<SearchPage> {
                     );
                   },
                 ),
+                const SizedBox(height: 12),
+                ValueListenableBuilder<List<String>>(
+                  valueListenable: _controller.suggestionNotifier,
+                  builder: (context, suggestions, _) {
+                    if (suggestions.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: suggestions
+                          .map(
+                            (suggestion) => ActionChip(
+                              label: Text(suggestion),
+                              onPressed: () => _applySuggestion(suggestion),
+                            ),
+                          )
+                          .toList(),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  children: sortOptions.entries.map((entry) {
+                    final selected = _selectedSort == entry.key;
+                    return ChoiceChip(
+                      label: Text(entry.value),
+                      selected: selected,
+                      onSelected: (value) {
+                        if (!value) return;
+                        setState(() => _selectedSort = entry.key);
+                        _controller.setSort(entry.key);
+                      },
+                    );
+                  }).toList(),
+                ),
               ],
             ),
           ),
@@ -248,10 +291,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _onQueryChanged(String value) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 250), () {
-      _controller.search(value, _filters.value);
-    });
+    _controller.search(value, _filters.value);
   }
 
   void _updateFilters(Map<String, dynamic> next) {
@@ -260,12 +300,13 @@ class _SearchPageState extends State<SearchPage> {
       updated['category'] = _selectedCategory;
     }
     _filters.value = updated;
-    _controller.search(_query.text, updated);
+    _controller.updateFilters(updated);
   }
 
   void _clearFilters() {
     _selectedCategory = '';
-    _updateFilters({});
+    _filters.value = {};
+    _controller.updateFilters({});
   }
 
   void _toggleCategory(String category) {
@@ -291,6 +332,11 @@ class _SearchPageState extends State<SearchPage> {
       current['tags'] = tags;
     }
     _updateFilters(current);
+  }
+
+  void _applySuggestion(String suggestion) {
+    _query.text = suggestion;
+    _controller.search(suggestion, _filters.value);
   }
 
   List<Widget> _buildActiveFilterChips(
@@ -395,6 +441,7 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget _buildTrending(BuildContext context, List<Product> items) {
     final l10n = context.l10n;
+    final currency = l10n.getString('currencySymbol');
     final trending = items.take(6).toList();
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -413,7 +460,7 @@ class _SearchPageState extends State<SearchPage> {
             child: ListTile(
               title: Text(product.name),
               subtitle:
-                  Text('${product.brand} · ${product.price.toStringAsFixed(0)}'),
+                  Text('${product.brand} · $currency${product.price.toStringAsFixed(0)}'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
                 Navigator.of(context).pushNamed('/product', arguments: product.id);

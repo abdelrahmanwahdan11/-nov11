@@ -5,6 +5,7 @@ import '../../core/utils/context_extensions.dart';
 import '../../shared/controllers/cart_controller.dart';
 import '../../shared/data/mock_products.dart';
 import '../../shared/models/cart_item.dart';
+import '../../shared/widgets/smart_network_image.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -41,7 +42,14 @@ class CartPage extends StatelessWidget {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(20),
-                            child: Image.network(product.images.first, width: 80, height: 80, fit: BoxFit.cover),
+                            child: SizedBox(
+                              width: 80,
+                              height: 80,
+                              child: SmartNetworkImage(
+                                imageUrl: product.images.first,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -50,8 +58,10 @@ class CartPage extends StatelessWidget {
                               children: [
                                 Text(product.name, style: context.textTheme.bodyLarge),
                                 const SizedBox(height: 8),
-                                Text('${product.price.toStringAsFixed(0)}',
-                                    style: context.textTheme.labelSmall),
+                                Text(
+                                  '${l10n.getString('currencySymbol')}${product.price.toStringAsFixed(0)}',
+                                  style: context.textTheme.labelSmall,
+                                ),
                               ],
                             ),
                           ),
@@ -79,7 +89,8 @@ class CartPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('${l10n.getString('total')}: ${cart.totalPrice().toStringAsFixed(0)}'),
+                    Text(
+                        '${l10n.getString('total')}: ${l10n.getString('currencySymbol')}${cart.totalPrice().toStringAsFixed(0)}'),
                     const SizedBox(height: 12),
                     ElevatedButton(
                       onPressed: () {

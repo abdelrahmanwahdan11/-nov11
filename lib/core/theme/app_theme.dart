@@ -10,32 +10,39 @@ class AppTheme {
 
   ThemeData buildLightTheme() {
     final base = ThemeData.light(useMaterial3: false);
-    final textTheme = GoogleFonts.urbanistTextTheme(base.textTheme).copyWith(
-      displayLarge: GoogleFonts.urbanist(
+    final onPrimary = DesignTokens.colorContrastFor(primaryColor);
+    final textTheme = GoogleFonts.urbanistTextTheme(base.textTheme).apply(
+      bodyColor: DesignTokens.textPrimary,
+      displayColor: DesignTokens.textPrimary,
+    );
+    final labelTheme = GoogleFonts.interTextTheme(base.textTheme).apply(
+      bodyColor: DesignTokens.textSecondary,
+      displayColor: DesignTokens.textSecondary,
+    );
+    final mergedTextTheme = textTheme.copyWith(
+      displayLarge: textTheme.displayLarge?.copyWith(
         fontSize: DesignTokens.display,
         fontWeight: FontWeight.w700,
-        color: DesignTokens.textPrimary,
       ),
-      headlineLarge: GoogleFonts.urbanist(
+      headlineLarge: textTheme.headlineLarge?.copyWith(
         fontSize: DesignTokens.h1,
         fontWeight: FontWeight.w700,
-        color: DesignTokens.textPrimary,
       ),
-      headlineMedium: GoogleFonts.inter(
+      headlineMedium: labelTheme.headlineMedium?.copyWith(
         fontSize: DesignTokens.h2,
         fontWeight: FontWeight.w600,
         color: DesignTokens.textPrimary,
       ),
-      bodyLarge: GoogleFonts.inter(
+      bodyLarge: labelTheme.bodyLarge?.copyWith(
         fontSize: DesignTokens.body,
         fontWeight: FontWeight.w500,
         color: DesignTokens.textPrimary,
       ),
-      bodyMedium: GoogleFonts.inter(
+      bodyMedium: labelTheme.bodyMedium?.copyWith(
         fontSize: DesignTokens.body,
         color: DesignTokens.textSecondary,
       ),
-      labelSmall: GoogleFonts.inter(
+      labelSmall: labelTheme.labelSmall?.copyWith(
         fontSize: DesignTokens.caption,
         color: DesignTokens.textSecondary,
       ),
@@ -47,11 +54,11 @@ class AppTheme {
         secondary: DesignTokens.accentSky,
         surface: DesignTokens.surface,
         background: DesignTokens.surfaceAlt,
-        onPrimary: Colors.white,
+        onPrimary: onPrimary,
         onSurface: DesignTokens.textPrimary,
       ),
       scaffoldBackgroundColor: DesignTokens.surfaceAlt,
-      textTheme: textTheme,
+      textTheme: mergedTextTheme,
       appBarTheme: AppBarTheme(
         elevation: 0,
         backgroundColor: DesignTokens.surfaceAlt,
@@ -64,6 +71,37 @@ class AppTheme {
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         ),
       ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryColor,
+          foregroundColor: onPrimary,
+          minimumSize: const Size.fromHeight(52),
+          shape: const StadiumBorder(),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: primaryColor,
+          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
+        ),
+      ),
+      chipTheme: base.chipTheme.copyWith(
+        selectedColor: primaryColor.withOpacity(0.12),
+        side: BorderSide(color: primaryColor.withOpacity(0.2)),
+        labelStyle: mergedTextTheme.bodyMedium,
+      ),
+      floatingActionButtonTheme: base.floatingActionButtonTheme.copyWith(
+        backgroundColor: primaryColor,
+        foregroundColor: onPrimary,
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: DesignTokens.surfaceAlt,
+        selectedItemColor: primaryColor,
+        unselectedItemColor: DesignTokens.textPrimary.withOpacity(0.55),
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+      ),
       dividerColor: DesignTokens.divider,
       useMaterial3: false,
     );
@@ -71,13 +109,39 @@ class AppTheme {
 
   ThemeData buildDarkTheme() {
     final base = ThemeData.dark(useMaterial3: false);
-    final textTheme = GoogleFonts.ibmPlexSansArabicTextTheme(
-      GoogleFonts.urbanistTextTheme(base.textTheme),
-    ).copyWith(
-      displayLarge: GoogleFonts.urbanist(
+    final onPrimary = DesignTokens.colorContrastFor(primaryColor);
+    final urbanistTheme = GoogleFonts.urbanistTextTheme(base.textTheme).apply(
+      bodyColor: DesignTokens.darkText,
+      displayColor: DesignTokens.darkText,
+    );
+    final cairoTheme = GoogleFonts.cairoTextTheme(base.textTheme).apply(
+      bodyColor: DesignTokens.darkText,
+      displayColor: DesignTokens.darkText,
+    );
+    final merged = urbanistTheme.copyWith(
+      displayLarge: urbanistTheme.displayLarge?.copyWith(
         fontSize: DesignTokens.display,
         fontWeight: FontWeight.w700,
-        color: DesignTokens.darkText,
+      ),
+      headlineLarge: urbanistTheme.headlineLarge?.copyWith(
+        fontSize: DesignTokens.h1,
+        fontWeight: FontWeight.w700,
+      ),
+      headlineMedium: cairoTheme.headlineMedium?.copyWith(
+        fontSize: DesignTokens.h2,
+        fontWeight: FontWeight.w600,
+      ),
+      bodyLarge: cairoTheme.bodyLarge?.copyWith(
+        fontSize: DesignTokens.body,
+        fontWeight: FontWeight.w500,
+      ),
+      bodyMedium: cairoTheme.bodyMedium?.copyWith(
+        fontSize: DesignTokens.body,
+        color: DesignTokens.darkText.withOpacity(0.78),
+      ),
+      labelSmall: cairoTheme.labelSmall?.copyWith(
+        fontSize: DesignTokens.caption,
+        color: DesignTokens.darkText.withOpacity(0.72),
       ),
     );
 
@@ -88,10 +152,10 @@ class AppTheme {
         surface: DesignTokens.darkSurface,
         background: DesignTokens.darkBg,
         onSurface: DesignTokens.darkText,
-        onPrimary: Colors.white,
+        onPrimary: onPrimary,
       ),
       scaffoldBackgroundColor: DesignTokens.darkBg,
-      textTheme: textTheme,
+      textTheme: merged,
       appBarTheme: AppBarTheme(
         elevation: 0,
         backgroundColor: DesignTokens.darkBg,
@@ -103,6 +167,37 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryColor,
+          foregroundColor: onPrimary,
+          minimumSize: const Size.fromHeight(52),
+          shape: const StadiumBorder(),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: DesignTokens.accentSky,
+          textStyle: GoogleFonts.cairo(fontWeight: FontWeight.w600),
+        ),
+      ),
+      chipTheme: base.chipTheme.copyWith(
+        selectedColor: primaryColor.withOpacity(0.2),
+        side: BorderSide(color: primaryColor.withOpacity(0.24)),
+        labelStyle: merged.bodyMedium,
+      ),
+      floatingActionButtonTheme: base.floatingActionButtonTheme.copyWith(
+        backgroundColor: primaryColor,
+        foregroundColor: onPrimary,
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: DesignTokens.darkBg,
+        selectedItemColor: primaryColor,
+        unselectedItemColor: DesignTokens.darkText.withOpacity(0.55),
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
       ),
       dividerColor: DesignTokens.divider.withOpacity(0.15),
       useMaterial3: false,

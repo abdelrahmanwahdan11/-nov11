@@ -7,42 +7,99 @@ import '../models/product.dart';
 
 class SearchController {
   SearchController() {
-    _controller = StreamController<List<Product>>.broadcast();
+    _resultsController = StreamController<List<Product>>.broadcast();
+    suggestionNotifier = ValueNotifier<List<String>>(_trendingQueries);
     _lastFilters = <String, dynamic>{};
   }
 
-  late final StreamController<List<Product>> _controller;
-  Stream<List<Product>> get results => _controller.stream;
+  late final StreamController<List<Product>> _resultsController;
+  Stream<List<Product>> get results => _resultsController.stream;
+  late final ValueNotifier<List<String>> suggestionNotifier;
+
   String _lastQuery = '';
   Map<String, dynamic> _lastFilters = {};
+  String _currentSort = 'relevance';
+  Timer? _debounce;
+
+  static final List<String> _trendingQueries = mockProducts
+      .map((product) => product.name)
+      .take(6)
+      .toList();
 
   void dispose() {
-    _controller.close();
+    _debounce?.cancel();
+    _resultsController.close();
+    suggestionNotifier.dispose();
   }
 
   void search(String query, Map<String, dynamic> filters) {
     _lastQuery = query;
     _lastFilters = {...filters};
-    final lower = query.toLowerCase().trim();
-    var matches = mockProducts.where((product) {
-      final queryMatch = lower.isEmpty ||
-          product.name.toLowerCase().contains(lower) ||
-          product.brand.toLowerCase().contains(lower) ||
-          product.tags.any((tag) => tag.toLowerCase().contains(lower)) ||
-          product.specs.entries.any((entry) =>
-              entry.key.toLowerCase().contains(lower) ||
-              entry.value.toLowerCase().contains(lower));
-      return queryMatch;
-    }).toList();
-    matches = _applyFilters(matches, filters);
-    _controller.add(matches);
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), _performSearch);
+  }
+
+  void setSort(String sort) {
+    _currentSort = sort;
+    _performSearch();
   }
 
   void updateFilters(Map<String, dynamic> filters) {
-    search(_lastQuery, filters);
+    _lastFilters = {...filters};
+    _performSearch();
   }
 
   Map<String, dynamic> get lastFilters => _lastFilters;
+
+  void _performSearch() {
+    final query = _lastQuery.toLowerCase().trim();
+    var matches = mockProducts.where((product) {
+      if (query.isEmpty) {
+        return true;
+      }
+      return product.name.toLowerCase().contains(query) ||
+          product.brand.toLowerCase().contains(query) ||
+          product.tags.any((tag) => tag.toLowerCase().contains(query)) ||
+          product.specs.entries.any(
+            (entry) =>
+                entry.key.toLowerCase().contains(query) ||
+                entry.value.toLowerCase().contains(query),
+          );
+    }).toList();
+
+    matches = _applyFilters(matches, _lastFilters);
+    matches = _applySort(matches);
+    _resultsController.add(matches);
+    _updateSuggestions(query);
+  }
+
+  void _updateSuggestions(String query) {
+    if (query.isEmpty) {
+      suggestionNotifier.value = _trendingQueries;
+      return;
+    }
+    final lower = query.toLowerCase();
+    final suggestions = <String>{};
+    for (final product in mockProducts) {
+      if (product.name.toLowerCase().contains(lower)) {
+        suggestions.add(product.name);
+      }
+      if (product.brand.toLowerCase().contains(lower)) {
+        suggestions.add(product.brand);
+      }
+      for (final tag in product.tags) {
+        if (tag.toLowerCase().contains(lower)) {
+          suggestions.add(tag);
+        }
+      }
+      if (suggestions.length >= 6) break;
+    }
+    if (suggestions.isEmpty) {
+      suggestionNotifier.value = _trendingQueries;
+    } else {
+      suggestionNotifier.value = suggestions.take(6).toList();
+    }
+  }
 
   List<Product> _applyFilters(
     List<Product> items,
@@ -60,8 +117,7 @@ class SearchController {
     final tags = filters['tags'] as List<String>?;
     if (tags != null && tags.isNotEmpty) {
       filtered = filtered
-          .where((product) =>
-              tags.every((tag) => product.tags.contains(tag)))
+          .where((product) => tags.every((tag) => product.tags.contains(tag)))
           .toList();
     }
     final hepa = filters['hepaClass'] as String?;
@@ -98,5 +154,26 @@ class SearchController {
           filtered.where((product) => product.rating >= ratingMin).toList();
     }
     return filtered;
+  }
+
+  List<Product> _applySort(List<Product> items) {
+    final list = [...items];
+    switch (_currentSort) {
+      case 'price_low_high':
+        list.sort((a, b) => a.price.compareTo(b.price));
+        break;
+      case 'price_high_low':
+        list.sort((a, b) => b.price.compareTo(a.price));
+        break;
+      case 'rating_desc':
+        list.sort((a, b) => b.rating.compareTo(a.rating));
+        break;
+      case 'name_asc':
+        list.sort((a, b) => a.name.compareTo(b.name));
+        break;
+      default:
+        break;
+    }
+    return list;
   }
 }

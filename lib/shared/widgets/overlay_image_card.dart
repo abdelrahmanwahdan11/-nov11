@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'smart_network_image.dart';
+
 class OverlayImageCard extends StatelessWidget {
   const OverlayImageCard({super.key, required this.image, required this.summary, required this.details, required this.onClose, required this.flipped, required this.onFlip});
 
@@ -71,10 +73,14 @@ class _OverlayContent extends StatelessWidget {
                   borderRadius: BorderRadius.circular(28),
                   child: Stack(
                     children: [
-                      Image.network(image,
-                          width: MediaQuery.of(context).size.width * 0.8,
-                          height: MediaQuery.of(context).size.height * 0.6,
-                          fit: BoxFit.cover),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.8,
+                        height: MediaQuery.of(context).size.height * 0.6,
+                        child: SmartNetworkImage(
+                          imageUrl: image,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                       Positioned(
                         left: 24,
                         bottom: 24,

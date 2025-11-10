@@ -56,6 +56,11 @@ class _SmartAirAppState extends State<SmartAirApp> {
       builder: (context, prefs, _) {
         final theme = AppTheme(primaryColor: prefs.primaryColor);
         final locale = Locale(prefs.localeCode);
+        final initialRoute = !prefs.onboardingSeen
+            ? '/onboarding'
+            : (prefs.isLoggedIn || prefs.isGuest)
+                ? '/home'
+                : '/auth';
         return MaterialApp(
           title: 'Smart Air',
           debugShowCheckedModeBanner: false,
@@ -70,7 +75,7 @@ class _SmartAirAppState extends State<SmartAirApp> {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          initialRoute: '/onboarding',
+          initialRoute: initialRoute,
           onGenerateRoute: (settings) {
             switch (settings.name) {
               case '/onboarding':

@@ -6,9 +6,12 @@ import '../../shared/controllers/favorites_controller.dart';
 import '../../shared/controllers/overlay_card_controller.dart';
 import '../../shared/controllers/product_controller.dart';
 import '../../shared/models/product.dart';
+import '../../shared/models/product_callout.dart';
+import '../../shared/widgets/callout_tag.dart';
 import '../../shared/widgets/feature_tag.dart';
 import '../../shared/widgets/image_360_preview.dart';
 import '../../shared/widgets/overlay_image_card.dart';
+import '../../shared/widgets/smart_network_image.dart';
 import '../../shared/widgets/sticky_cta.dart';
 
 class ProductDetailPage extends StatefulWidget {
@@ -39,6 +42,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     _controller.productNotifier.dispose();
     _overlayController.isVisible.dispose();
     _overlayController.isFlipped.dispose();
+    _controller.callouts.dispose();
     super.dispose();
   }
 
@@ -76,7 +80,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             bottomLeft: Radius.circular(48),
                             bottomRight: Radius.circular(48),
                           ),
-                          child: Image.network(product.images.first, fit: BoxFit.cover),
+                          child: ValueListenableBuilder<List<ProductCallout>>(
+                            valueListenable: _controller.callouts,
+                            builder: (context, callouts, _) {
+                              return Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  SmartNetworkImage(
+                                    imageUrl: product.images.first,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  ...callouts.map((callout) => _buildCallout(context, callout)).toList(),
+                                ],
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ),
@@ -112,7 +130,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         ),
                         if (product.frames360 != null) ...[
                           const SizedBox(height: 32),
-                          Text('360° Preview', style: context.textTheme.headlineMedium),
+                          Text(l10n.getString('preview360'), style: context.textTheme.headlineMedium),
                           const SizedBox(height: 12),
                           Image360Preview(frames: product.frames360!),
                         ],
@@ -145,7 +163,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           children: [
                             Text(l10n.getString('overview'), style: context.textTheme.headlineMedium),
                             const SizedBox(height: 12),
-                            Text('Premium airflow with adaptive filtration and quiet rotation.'),
+                            Text(l10n.getString('overlayDetail')),
                           ],
                         ),
                         onClose: _overlayController.hide,
@@ -230,5 +248,58 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   bool isCurrentFavorite(FavoritesController favoritesController, String id) {
     return favoritesController.favoritesNotifier.value.any((element) => element.id == id);
+  }
+
+  Widget _buildCallout(BuildContext context, ProductCallout callout) {
+    final label = context.l10n.getString(callout.labelKey);
+    final tag = CalloutTag(
+      label: label,
+      onTap: () => _showCalloutDetails(callout),
+    );
+    if (callout.centerX) {
+      return Positioned(
+        left: 0,
+        right: 0,
+        bottom: callout.bottom ?? 32,
+        child: Center(child: tag),
+      );
+    }
+    return Positioned(
+      top: callout.top,
+      left: callout.left,
+      right: callout.right,
+      bottom: callout.bottom,
+      child: tag,
+    );
+  }
+
+  void _showCalloutDetails(ProductCallout callout) {
+    final l10n = context.l10n;
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.getString(callout.labelKey),
+                style: context.textTheme.headlineMedium,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l10n.getString(callout.descriptionKey),
+                style: context.textTheme.bodyLarge,
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

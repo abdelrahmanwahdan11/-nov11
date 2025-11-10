@@ -33,14 +33,19 @@ class AuthController {
     passwordStrength.value = strength;
   }
 
-  Future<User> signIn({bool guest = false}) async {
+  Future<User> signIn({String? email, bool guest = false}) async {
     isLoading.value = true;
     await Future<void>.delayed(const Duration(milliseconds: 600));
     isLoading.value = false;
-    return User(id: guest ? null : 'u1', name: guest ? 'Guest' : 'Alya', guest: guest);
+    if (guest) {
+      return User(id: null, name: 'Guest', guest: true);
+    }
+    final username = (email ?? '').split('@').first;
+    final formattedName = username.isNotEmpty ? '${username[0].toUpperCase()}${username.substring(1)}' : 'Member';
+    return User(id: 'u1', name: formattedName, guest: false);
   }
 
-  Future<User> signUp() async {
-    return signIn();
+  Future<User> signUp({required String email}) async {
+    return signIn(email: email);
   }
 }

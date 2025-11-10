@@ -15,6 +15,9 @@ class AuthPage extends StatefulWidget {
 class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin {
   late final AuthController _controller;
   bool _obscure = true;
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _signUpEmailController = TextEditingController();
+  final TextEditingController _signUpPasswordController = TextEditingController();
 
   @override
   void initState() {
@@ -25,6 +28,9 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
   @override
   void dispose() {
     _controller.dispose();
+    _confirmPasswordController.dispose();
+    _signUpEmailController.dispose();
+    _signUpPasswordController.dispose();
     super.dispose();
   }
 
@@ -59,11 +65,12 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
       padding: const EdgeInsets.all(24),
       child: Form(
         key: _controller.signInKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: ListView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           children: [
             TextFormField(
               controller: _controller.emailController,
+              keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
                 labelText: l10n.getString('email'),
                 hintText: l10n.getString('emailHint'),
@@ -108,9 +115,14 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
                       ? null
                       : () async {
                           if (_controller.signInKey.currentState?.validate() ?? false) {
-                            final user = await _controller.signIn();
-                            AppScope.of(context).appController.setUser(user);
-                            Navigator.of(context).pushReplacementNamed('/home');
+                            final scope = AppScope.of(context);
+                            final user = await _controller.signIn(
+                              email: _controller.emailController.text.trim(),
+                            );
+                            await scope.appController.setUser(user);
+                            await Future<void>.delayed(const Duration(milliseconds: 200));
+                            if (!mounted) return;
+                            Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
                           }
                         },
                 );
@@ -120,9 +132,12 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
             Center(
               child: TextButton(
                 onPressed: () async {
+                  final scope = AppScope.of(context);
                   final user = await _controller.signIn(guest: true);
-                  AppScope.of(context).appController.setUser(user);
-                  Navigator.of(context).pushReplacementNamed('/home');
+                  await scope.appController.setUser(user);
+                  await Future<void>.delayed(const Duration(milliseconds: 150));
+                  if (!mounted) return;
+                  Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
                 },
                 child: Text(l10n.getString('continueAsGuest')),
               ),
@@ -139,10 +154,11 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
       padding: const EdgeInsets.all(24),
       child: Form(
         key: _controller.signUpKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: ListView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           children: [
             TextFormField(
+              controller: _signUpEmailController,
               decoration: InputDecoration(
                 labelText: l10n.getString('email'),
               ),
@@ -151,6 +167,7 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
             ),
             const SizedBox(height: 16),
             TextFormField(
+              controller: _signUpPasswordController,
               obscureText: _obscure,
               onChanged: _controller.evaluatePassword,
               decoration: InputDecoration(
@@ -162,6 +179,15 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
               ),
               validator: (value) =>
                   value != null && value.length >= 8 ? null : l10n.getString('passwordHint'),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _confirmPasswordController,
+              obscureText: true,
+              decoration: InputDecoration(labelText: l10n.getString('confirmPassword')),
+              validator: (value) => value == _signUpPasswordController.text
+                  ? null
+                  : l10n.getString('passwordMismatch'),
             ),
             const SizedBox(height: 12),
             ValueListenableBuilder<String>(
@@ -201,9 +227,14 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
                       ? null
                       : () async {
                           if (_controller.signUpKey.currentState?.validate() ?? false) {
-                            final user = await _controller.signUp();
-                            AppScope.of(context).appController.setUser(user);
-                            Navigator.of(context).pushReplacementNamed('/home');
+                            final scope = AppScope.of(context);
+                            final user = await _controller.signUp(
+                              email: _signUpEmailController.text.trim(),
+                            );
+                            await scope.appController.setUser(user);
+                            await Future<void>.delayed(const Duration(milliseconds: 200));
+                            if (!mounted) return;
+                            Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
                           }
                         },
                 );

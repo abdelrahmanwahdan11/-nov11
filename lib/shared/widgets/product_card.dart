@@ -4,6 +4,7 @@ import '../../core/utils/context_extensions.dart';
 import '../models/product.dart';
 import 'feature_tag.dart';
 import 'rating_stars.dart';
+import 'smart_network_image.dart';
 
 class ProductCard extends StatelessWidget {
   const ProductCard({
@@ -23,32 +24,34 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final currency = context.l10n.getString('currencySymbol');
     return GestureDetector(
       onTap: onTap,
       child: Hero(
         tag: 'product_${product.id}',
         child: Container(
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(28),
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                child: AspectRatio(
+                  aspectRatio: 3 / 4,
                   child: Stack(
+                    fit: StackFit.expand,
                     children: [
-                      Positioned.fill(
-                        child: Image.network(product.images.first, fit: BoxFit.cover),
-                      ),
+                      SmartNetworkImage(imageUrl: product.images.first),
                       Positioned(
                         top: 16,
                         right: 16,
                         child: IconButton(
                           style: IconButton.styleFrom(
-                            backgroundColor: Colors.black26,
+                            backgroundColor: Colors.black54,
                             foregroundColor: Colors.white,
                           ),
                           onPressed: onFavorite,
@@ -66,19 +69,25 @@ class ProductCard extends StatelessWidget {
                   children: [
                     Text(
                       product.brand.toUpperCase(),
-                      style: context.textTheme.labelSmall?.copyWith(letterSpacing: 1.2),
+                      style: context.textTheme.labelSmall?.copyWith(
+                        letterSpacing: 1.2,
+                        color: context.textTheme.labelSmall?.color?.withOpacity(0.8),
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       product.name,
                       style: context.textTheme.headlineMedium,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          '${product.price.toStringAsFixed(0)}',
+                          '$currency${product.price.toStringAsFixed(0)}',
                           style: context.textTheme.headlineMedium,
                         ),
                         RatingStars(value: product.rating),
@@ -96,9 +105,16 @@ class ProductCard extends StatelessWidget {
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        TextButton(onPressed: onCompare, child: const Text('Compare')),
+                        TextButton(
+                          onPressed: onCompare,
+                          child: Text(context.l10n.getString('compare')),
+                        ),
                         const Spacer(),
-                        const Icon(Icons.arrow_forward, size: 20),
+                        Icon(
+                          Icons.arrow_forward,
+                          size: 20,
+                          color: theme.iconTheme.color,
+                        ),
                       ],
                     ),
                   ],

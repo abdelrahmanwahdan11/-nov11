@@ -9,6 +9,7 @@ import '../../shared/models/product.dart';
 import '../../shared/widgets/chip_filter.dart';
 import '../../shared/widgets/product_card.dart';
 import '../../shared/widgets/skeleton_box.dart';
+import '../../shared/widgets/smart_network_image.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -101,37 +102,47 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
-                      height: 220,
+                      height: 260,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemBuilder: (context, index) {
                           final product = mockProducts[index % mockProducts.length];
-                          return Container(
-                            width: 260,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(28),
-                              image: DecorationImage(
-                                image: NetworkImage(product.images.first),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(28),
-                                gradient: LinearGradient(
-                                  colors: [Colors.black.withOpacity(0.6), Colors.transparent],
-                                  begin: Alignment.bottomLeft,
-                                  end: Alignment.topRight,
-                                ),
-                              ),
-                              padding: const EdgeInsets.all(20),
-                              child: Align(
-                                alignment: Alignment.bottomLeft,
-                                child: Text(
-                                  product.name,
-                                  style:
-                                      context.textTheme.headlineMedium?.copyWith(color: Colors.white),
-                                ),
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: SizedBox(
+                              width: 240,
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  SmartNetworkImage(
+                                    imageUrl: product.images.first,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.bottomLeft,
+                                        end: Alignment.topRight,
+                                        colors: [
+                                          Colors.black.withOpacity(0.75),
+                                          Colors.transparent,
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Align(
+                                      alignment: Alignment.bottomLeft,
+                                      child: Text(
+                                        product.name,
+                                        style: context.textTheme.headlineMedium?.copyWith(
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -170,7 +181,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             const SizedBox(height: 12),
                             SizedBox(
-                              height: 140,
+                              height: 160,
                               child: ListView.separated(
                                 scrollDirection: Axis.horizontal,
                                 itemBuilder: (context, index) {
@@ -178,12 +189,12 @@ class _HomePageState extends State<HomePage> {
                                   return GestureDetector(
                                     onTap: () => Navigator.of(context)
                                         .pushNamed('/product', arguments: item.id),
-                                    child: Container(
-                                      width: 140,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(24),
-                                        image: DecorationImage(
-                                          image: NetworkImage(item.images.first),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(24),
+                                      child: SizedBox(
+                                        width: 140,
+                                        child: SmartNetworkImage(
+                                          imageUrl: item.images.first,
                                           fit: BoxFit.cover,
                                         ),
                                       ),
@@ -280,18 +291,22 @@ class _HomePageState extends State<HomePage> {
               Navigator.of(context).pushNamed('/catalog');
               break;
             case 2:
-              Navigator.of(context).pushNamed('/favorites');
+              Navigator.of(context).pushNamed('/compare');
               break;
             case 3:
-              Navigator.of(context).pushNamed('/cart');
+              Navigator.of(context).pushNamed('/favorites');
+              break;
+            case 4:
+              Navigator.of(context).pushNamed('/settings');
               break;
           }
         },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: 'Catalog'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorites'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: 'Cart'),
+        items: [
+          BottomNavigationBarItem(icon: const Icon(Icons.home), label: l10n.getString('home')),
+          BottomNavigationBarItem(icon: const Icon(Icons.grid_view), label: l10n.getString('catalog')),
+          BottomNavigationBarItem(icon: const Icon(Icons.compare_arrows), label: l10n.getString('compare')),
+          BottomNavigationBarItem(icon: const Icon(Icons.favorite), label: l10n.getString('favorites')),
+          BottomNavigationBarItem(icon: const Icon(Icons.settings), label: l10n.getString('settings')),
         ],
       ),
     );

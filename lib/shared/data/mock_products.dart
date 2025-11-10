@@ -6,8 +6,8 @@ final mockProducts = <Product>[
     name: 'Nimbus Flow Pro',
     brand: 'Aeris',
     images: const [
-      'https://images.unsplash.com/photo-1585386959984-a4155223167f',
-      'https://images.unsplash.com/photo-1598300053650-7b7b2a1dc07b',
+      'https://picsum.photos/seed/nimbus-flow-pro/900/1200',
+      'https://picsum.photos/seed/nimbus-flow-pro-alt/900/1200',
     ],
     price: 459.0,
     rating: 4.8,
@@ -21,8 +21,8 @@ final mockProducts = <Product>[
     powerW: 45,
     hepaClass: 'H13',
     frames360: const [
-      'https://images.unsplash.com/photo-1585386959984-a4155223167f',
-      'https://images.unsplash.com/photo-1598300053650-7b7b2a1dc07b',
+      'https://picsum.photos/seed/nimbus-flow-pro-01/900/1200',
+      'https://picsum.photos/seed/nimbus-flow-pro-02/900/1200',
     ],
   ),
   Product(
@@ -30,8 +30,8 @@ final mockProducts = <Product>[
     name: 'Halo Heat Hybrid',
     brand: 'Clima',
     images: const [
-      'https://images.unsplash.com/photo-1616628188505-4049d16e29d5',
-      'https://images.unsplash.com/photo-1519710164239-da123dc03ef4',
+      'https://picsum.photos/seed/halo-heat-hybrid/900/1200',
+      'https://picsum.photos/seed/halo-heat-hybrid-alt/900/1200',
     ],
     price: 389.0,
     rating: 4.6,
@@ -49,8 +49,8 @@ final mockProducts = <Product>[
     name: 'AeroPure Mini',
     brand: 'BreezeLabs',
     images: const [
-      'https://images.unsplash.com/photo-1580041065739-27b0134a5f24',
-      'https://images.unsplash.com/photo-1598300053650-7b7b2a1dc07b',
+      'https://picsum.photos/seed/aeropure-mini/900/1200',
+      'https://picsum.photos/seed/aeropure-mini-alt/900/1200',
     ],
     price: 219.0,
     rating: 4.2,
@@ -69,8 +69,8 @@ final mockProducts = <Product>[
     name: 'Jetstream Silent',
     brand: 'Aeris',
     images: const [
-      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab',
-      'https://images.unsplash.com/photo-1580041065739-27b0134a5f24',
+      'https://picsum.photos/seed/jetstream-silent/900/1200',
+      'https://picsum.photos/seed/jetstream-silent-alt/900/1200',
     ],
     price: 299.0,
     rating: 4.5,
@@ -88,8 +88,8 @@ final mockProducts = <Product>[
     name: 'Glow Warm Pro',
     brand: 'Clima',
     images: const [
-      'https://images.unsplash.com/photo-1503389152951-9f343605f61e',
-      'https://images.unsplash.com/photo-1519710164239-da123dc03ef4',
+      'https://picsum.photos/seed/glow-warm-pro/900/1200',
+      'https://picsum.photos/seed/glow-warm-pro-alt/900/1200',
     ],
     price: 429.0,
     rating: 4.7,
@@ -107,8 +107,8 @@ final mockProducts = <Product>[
     name: 'PureRing Mini',
     brand: 'BreezeLabs',
     images: const [
-      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b',
-      'https://images.unsplash.com/photo-1580041065739-27b0134a5f24',
+      'https://picsum.photos/seed/purering-mini/900/1200',
+      'https://picsum.photos/seed/purering-mini-alt/900/1200',
     ],
     price: 189.0,
     rating: 4.1,
@@ -126,8 +126,8 @@ final mockProducts = <Product>[
     name: 'Stratos Cool Flex',
     brand: 'Aeris',
     images: const [
-      'https://images.unsplash.com/photo-1484704849700-f032a568e944',
-      'https://images.unsplash.com/photo-1616628188505-4049d16e29d5',
+      'https://picsum.photos/seed/stratos-cool-flex/900/1200',
+      'https://picsum.photos/seed/stratos-cool-flex-alt/900/1200',
     ],
     price: 379.0,
     rating: 4.4,
@@ -145,8 +145,8 @@ final mockProducts = <Product>[
     name: 'Aura Sense X',
     brand: 'Clima',
     images: const [
-      'https://images.unsplash.com/photo-1503387762-592deb58ef4e',
-      'https://images.unsplash.com/photo-1598300053650-7b7b2a1dc07b',
+      'https://picsum.photos/seed/aura-sense-x/900/1200',
+      'https://picsum.photos/seed/aura-sense-x-alt/900/1200',
     ],
     price: 499.0,
     rating: 4.9,
