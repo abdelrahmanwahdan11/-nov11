@@ -5,10 +5,12 @@ import '../../core/l10n/app_localizations.dart';
 import '../../core/utils/context_extensions.dart';
 import '../../shared/controllers/catalog_controller.dart';
 import '../../shared/controllers/environment_controller.dart';
+import '../../shared/controllers/environment_schedule_controller.dart';
 import '../../shared/controllers/favorites_controller.dart';
 import '../../shared/data/mock_products.dart';
 import '../../shared/models/app_prefs.dart';
 import '../../shared/models/environment_scene.dart';
+import '../../shared/models/environment_schedule.dart';
 import '../../shared/models/product.dart';
 import '../../shared/widgets/chip_filter.dart';
 import '../../shared/widgets/environment_stat_card.dart';
@@ -18,6 +20,7 @@ import '../../shared/widgets/skeleton_box.dart';
 import '../../shared/widgets/smart_network_image.dart';
 import '../../shared/widgets/scene_card.dart';
 import '../../shared/widgets/routine_card.dart';
+import '../../shared/utils/schedule_formatter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -55,6 +58,7 @@ class _HomePageState extends State<HomePage> {
     final catalog = scope.catalogController;
     final favorites = scope.favoritesController;
     final environment = scope.environmentController;
+    final scheduleController = scope.environmentScheduleController;
     final routines = _RoutineBlueprint.samples(l10n);
     final categories = {
       'all': l10n.getString('catalog'),
@@ -140,6 +144,13 @@ class _HomePageState extends State<HomePage> {
                         ),
                         _quickAction(
                           context,
+                          icon: Icons.edit_calendar,
+                          label: l10n.getString('quickActionSchedules'),
+                          onTap: () => Navigator.of(context)
+                              .pushNamed('/environment-schedules'),
+                        ),
+                        _quickAction(
+                          context,
                           icon: Icons.headset_mic,
                           label: l10n.getString('quickActionSupport'),
                           onTap: () =>
@@ -215,6 +226,28 @@ class _HomePageState extends State<HomePage> {
                               ],
                             ),
                           ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      l10n.getString('homeSchedulesTitle'),
+                      style: context.textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.getString('homeSchedulesSubtitle'),
+                      style: context.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    ValueListenableBuilder<List<EnvironmentSchedule>>(
+                      valueListenable: scheduleController.schedulesNotifier,
+                      builder: (context, schedules, _) {
+                        return _buildScheduleOverview(
+                          context,
+                          environment,
+                          scheduleController,
+                          schedules,
                         );
                       },
                     ),
@@ -564,6 +597,134 @@ class _HomePageState extends State<HomePage> {
       label: Text(label),
       onPressed: onTap,
     );
+  }
+
+  Widget _buildScheduleOverview(
+    BuildContext context,
+    EnvironmentController environment,
+    EnvironmentScheduleController scheduleController,
+    List<EnvironmentSchedule> schedules,
+  ) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final occurrence = scheduleController.nextOccurrence(schedules: schedules);
+    final hasSchedules = schedules.isNotEmpty;
+    final background = theme.cardColor;
+    final borderColor = theme.colorScheme.primary
+        .withOpacity(context.isDarkMode ? 0.35 : 0.18);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.getString('scheduleUpcomingLabel'),
+                  style: context.textTheme.titleMedium,
+                ),
+              ),
+              Icon(Icons.edit_calendar, color: theme.colorScheme.primary),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (occurrence != null) ...[
+            Text(
+              l10n
+                  .getString('scheduleUpcomingSwitch')
+                  .replaceFirst(
+                    '{scene}',
+                    _resolveSceneTitle(
+                      context,
+                      environment,
+                      occurrence.schedule.sceneId,
+                    ),
+                  )
+                  .replaceFirst(
+                    '{time}',
+                    MaterialLocalizations.of(context).formatTimeOfDay(
+                      TimeOfDay.fromDateTime(occurrence.occursAt),
+                    ),
+                  ),
+              style: context.textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                Chip(
+                  avatar: const Icon(Icons.calendar_today, size: 16),
+                  label: Text(
+                    MaterialLocalizations.of(context)
+                        .formatMediumDate(occurrence.occursAt),
+                  ),
+                ),
+                Chip(
+                  label: Text(
+                    l10n
+                        .getString('scheduleUpcomingDays')
+                        .replaceFirst(
+                          '{days}',
+                          ScheduleFormatter.describeDays(
+                            l10n,
+                            occurrence.schedule,
+                          ),
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ] else if (hasSchedules) ...[
+            Text(
+              l10n.getString('scheduleUpcomingPaused'),
+              style: context.textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.getString('homeSchedulesSubtitle'),
+              style: context.textTheme.bodyMedium,
+            ),
+          ] else ...[
+            Text(
+              l10n.getString('homeSchedulesEmpty'),
+              style: context.textTheme.bodyLarge,
+            ),
+          ],
+          const SizedBox(height: 16),
+          TextButton.icon(
+            onPressed: () =>
+                Navigator.of(context).pushNamed('/environment-schedules'),
+            icon: const Icon(Icons.tune),
+            label: Text(l10n.getString('scheduleManageCta')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _resolveSceneTitle(
+    BuildContext context,
+    EnvironmentController environment,
+    String id,
+  ) {
+    final scenes = environment.scenes;
+    final match = scenes.where((scene) => scene.id == id);
+    if (match.isNotEmpty) {
+      return context.l10n.getString(match.first.titleKey);
+    }
+    if (scenes.isNotEmpty) {
+      return context.l10n.getString(scenes.first.titleKey);
+    }
+    return id;
   }
 
   Widget _buildActiveSceneBanner(

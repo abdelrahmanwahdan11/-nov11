@@ -9,6 +9,7 @@ import 'features/cart/cart_page.dart';
 import 'features/catalog/catalog_page.dart';
 import 'features/compare/compare_page.dart';
 import 'features/favorites/favorites_page.dart';
+import 'features/environment/environment_schedule_page.dart';
 import 'features/home/home_page.dart';
 import 'features/notifications/notifications_page.dart';
 import 'features/onboarding/onboarding_page.dart';
@@ -21,6 +22,7 @@ import 'shared/controllers/cart_controller.dart';
 import 'shared/controllers/catalog_controller.dart';
 import 'shared/controllers/compare_controller.dart';
 import 'shared/controllers/environment_controller.dart';
+import 'shared/controllers/environment_schedule_controller.dart';
 import 'shared/controllers/favorites_controller.dart';
 import 'shared/controllers/notifications_controller.dart';
 
@@ -36,6 +38,9 @@ Future<void> main() async {
   await notificationsController.load();
   final environmentController = EnvironmentController(appController)
     ..bootstrap();
+  final environmentScheduleController =
+      EnvironmentScheduleController(environmentController);
+  await environmentScheduleController.load();
   runApp(
     AppScope(
       appController: appController,
@@ -45,6 +50,7 @@ Future<void> main() async {
       cartController: cartController,
       notificationsController: notificationsController,
       environmentController: environmentController,
+      environmentScheduleController: environmentScheduleController,
       child: const SmartAirApp(),
     ),
   );
@@ -106,6 +112,10 @@ class _SmartAirAppState extends State<SmartAirApp> {
                 return MaterialPageRoute(builder: (_) => const NotificationsPage());
               case '/settings':
                 return MaterialPageRoute(builder: (_) => const SettingsPage());
+              case '/environment-schedules':
+                return MaterialPageRoute(
+                  builder: (_) => const EnvironmentSchedulePage(),
+                );
               case '/support':
                 return MaterialPageRoute(builder: (_) => const SupportPage());
               case '/search':
