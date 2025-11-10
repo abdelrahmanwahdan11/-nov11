@@ -19,6 +19,7 @@ import 'features/product/product_detail_page.dart';
 import 'features/search/search_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/support/support_page.dart';
+import 'features/maintenance/maintenance_page.dart';
 import 'shared/controllers/air_quality_controller.dart';
 import 'shared/controllers/app_controller.dart';
 import 'shared/controllers/cart_controller.dart';
@@ -29,6 +30,7 @@ import 'shared/controllers/environment_schedule_controller.dart';
 import 'shared/controllers/energy_usage_controller.dart';
 import 'shared/controllers/favorites_controller.dart';
 import 'shared/controllers/notifications_controller.dart';
+import 'shared/controllers/maintenance_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +51,8 @@ Future<void> main() async {
   await airQualityController.load();
   final energyUsageController = EnergyUsageController();
   await energyUsageController.load();
+  final maintenanceController = MaintenanceController();
+  await maintenanceController.load();
   runApp(
     AppScope(
       appController: appController,
@@ -61,6 +65,7 @@ Future<void> main() async {
       environmentScheduleController: environmentScheduleController,
       airQualityController: airQualityController,
       energyUsageController: energyUsageController,
+      maintenanceController: maintenanceController,
       child: const SmartAirApp(),
     ),
   );
@@ -126,6 +131,9 @@ class _SmartAirAppState extends State<SmartAirApp> {
                 return MaterialPageRoute(builder: (_) => const AirQualityPage());
               case '/energy':
                 return MaterialPageRoute(builder: (_) => const EnergyPage());
+              case '/maintenance':
+                return MaterialPageRoute(
+                    builder: (_) => const MaintenancePage());
               case '/environment-schedules':
                 return MaterialPageRoute(
                   builder: (_) => const EnvironmentSchedulePage(),

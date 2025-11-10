@@ -7,12 +7,14 @@ import '../../shared/controllers/catalog_controller.dart';
 import '../../shared/controllers/environment_controller.dart';
 import '../../shared/controllers/environment_schedule_controller.dart';
 import '../../shared/controllers/favorites_controller.dart';
+import '../../shared/controllers/maintenance_controller.dart';
 import '../../shared/data/mock_products.dart';
 import '../../shared/models/app_prefs.dart';
 import '../../shared/models/air_quality.dart';
 import '../../shared/models/energy_usage.dart';
 import '../../shared/models/environment_scene.dart';
 import '../../shared/models/environment_schedule.dart';
+import '../../shared/models/maintenance_task.dart';
 import '../../shared/models/product.dart';
 import '../../shared/widgets/air_quality_gauge.dart';
 import '../../shared/widgets/chip_filter.dart';
@@ -63,6 +65,7 @@ class _HomePageState extends State<HomePage> {
     final environment = scope.environmentController;
     final airQuality = scope.airQualityController;
     final energy = scope.energyUsageController;
+    final maintenance = scope.maintenanceController;
     final scheduleController = scope.environmentScheduleController;
     final routines = _RoutineBlueprint.samples(l10n);
     final categories = {
@@ -163,6 +166,13 @@ class _HomePageState extends State<HomePage> {
                         ),
                         _quickAction(
                           context,
+                          icon: Icons.build_circle,
+                          label: l10n.getString('quickActionMaintenance'),
+                          onTap: () => Navigator.of(context)
+                              .pushNamed('/maintenance'),
+                        ),
+                        _quickAction(
+                          context,
                           icon: Icons.headset_mic,
                           label: l10n.getString('quickActionSupport'),
                           onTap: () =>
@@ -183,6 +193,25 @@ class _HomePageState extends State<HomePage> {
                               Navigator.of(context).pushNamed('/cart'),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 24),
+                    ValueListenableBuilder<List<MaintenanceTask>>(
+                      valueListenable: maintenance.tasksNotifier,
+                      builder: (context, tasks, _) {
+                        if (tasks.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        final sorted = [...tasks]
+                          ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+                        final spotlight = sorted.first;
+                        final dueSoon = maintenance.upcomingDueSoon;
+                        return _HomeMaintenancePreview(
+                          task: spotlight,
+                          dueSoon: dueSoon,
+                          onTap: () =>
+                              Navigator.of(context).pushNamed('/maintenance'),
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
                     ValueListenableBuilder<EnergyUsageSnapshot>(
@@ -977,6 +1006,142 @@ Future<void> _showSceneDetails(BuildContext context, EnvironmentScene scene) {
       );
     },
   );
+}
+
+class _HomeMaintenancePreview extends StatelessWidget {
+  const _HomeMaintenancePreview({
+    required this.task,
+    required this.dueSoon,
+    required this.onTap,
+  });
+
+  final MaintenanceTask task;
+  final List<MaintenanceTask> dueSoon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+    final difference = task.dueDate.difference(DateTime.now()).inDays;
+    final dueLabel = difference < 0
+        ? l10n
+            .getString('maintenanceOverdueBy')
+            .replaceFirst('{days}', difference.abs().toString())
+        : difference == 0
+            ? l10n.getString('maintenanceDueToday')
+            : l10n
+                .getString('maintenanceDueIn')
+                .replaceFirst('{days}', difference.toString());
+    final statusLabel = () {
+      switch (task.status) {
+        case MaintenanceStatus.overdue:
+          return l10n.getString('maintenanceStatusOverdue');
+        case MaintenanceStatus.dueSoon:
+          return l10n.getString('maintenanceStatusDueSoon');
+        case MaintenanceStatus.upcoming:
+          return l10n.getString('maintenanceStatusUpcoming');
+      }
+    }();
+    final statusColor = () {
+      switch (task.status) {
+        case MaintenanceStatus.overdue:
+          return theme.colorScheme.error;
+        case MaintenanceStatus.dueSoon:
+          return theme.colorScheme.primary;
+        case MaintenanceStatus.upcoming:
+          return theme.colorScheme.secondary;
+      }
+    }();
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: statusColor.withOpacity(0.18)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.getString('homeMaintenanceTitle'),
+                    style: theme.textTheme.titleLarge,
+                  ),
+                ),
+                Icon(Icons.build_circle_outlined, color: statusColor),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.getString('homeMaintenanceSubtitle'),
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 18),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.16),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                statusLabel,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: statusColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              l10n.getString(task.titleKey),
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              dueLabel,
+              style: theme.textTheme.bodySmall,
+            ),
+            if (dueSoon.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              Text(
+                l10n.getString('homeMaintenanceDueSoon'),
+                style: theme.textTheme.labelLarge,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: dueSoon.take(3).map((task) {
+                  return Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withOpacity(0.12),
+                      ),
+                    ),
+                    child: Text(
+                      l10n.getString(task.titleKey),
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _HomeEnergyPreview extends StatelessWidget {

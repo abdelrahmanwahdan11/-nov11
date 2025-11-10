@@ -116,6 +116,8 @@ class AppController {
     await prefs.remove('onboardingSeen');
     await prefs.remove('userName');
     await prefs.remove('preferredScene');
+    await prefs.remove('maintenanceTasks');
+    await prefs.remove('maintenanceRemindersEnabled');
     prefsNotifier.value = AppPrefs.defaults();
     userNotifier.value = null;
   }
