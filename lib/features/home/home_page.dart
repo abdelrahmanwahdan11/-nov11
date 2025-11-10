@@ -10,6 +10,7 @@ import '../../shared/controllers/favorites_controller.dart';
 import '../../shared/data/mock_products.dart';
 import '../../shared/models/app_prefs.dart';
 import '../../shared/models/air_quality.dart';
+import '../../shared/models/energy_usage.dart';
 import '../../shared/models/environment_scene.dart';
 import '../../shared/models/environment_schedule.dart';
 import '../../shared/models/product.dart';
@@ -61,6 +62,7 @@ class _HomePageState extends State<HomePage> {
     final favorites = scope.favoritesController;
     final environment = scope.environmentController;
     final airQuality = scope.airQualityController;
+    final energy = scope.energyUsageController;
     final scheduleController = scope.environmentScheduleController;
     final routines = _RoutineBlueprint.samples(l10n);
     final categories = {
@@ -154,6 +156,13 @@ class _HomePageState extends State<HomePage> {
                         ),
                         _quickAction(
                           context,
+                          icon: Icons.bolt,
+                          label: l10n.getString('quickActionEnergy'),
+                          onTap: () =>
+                              Navigator.of(context).pushNamed('/energy'),
+                        ),
+                        _quickAction(
+                          context,
                           icon: Icons.headset_mic,
                           label: l10n.getString('quickActionSupport'),
                           onTap: () =>
@@ -174,6 +183,17 @@ class _HomePageState extends State<HomePage> {
                               Navigator.of(context).pushNamed('/cart'),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 24),
+                    ValueListenableBuilder<EnergyUsageSnapshot>(
+                      valueListenable: energy.snapshotNotifier,
+                      builder: (context, snapshot, _) {
+                        return _HomeEnergyPreview(
+                          snapshot: snapshot,
+                          onTap: () =>
+                              Navigator.of(context).pushNamed('/energy'),
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
                     ValueListenableBuilder<AirQualitySnapshot>(
@@ -957,6 +977,134 @@ Future<void> _showSceneDetails(BuildContext context, EnvironmentScene scene) {
       );
     },
   );
+}
+
+class _HomeEnergyPreview extends StatelessWidget {
+  const _HomeEnergyPreview({
+    required this.snapshot,
+    required this.onTap,
+  });
+
+  final EnergyUsageSnapshot snapshot;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final change = snapshot.changePercent;
+    final changeLabel = change.abs() < 0.5
+        ? l10n.getString('energyChangeStable')
+        : l10n
+            .getString(change < 0 ? 'energyChangeDown' : 'energyChangeUp')
+            .replaceFirst('{percent}', change.abs().toStringAsFixed(1));
+    final currency = l10n.getString('currencySymbol');
+    final changeColor =
+        change <= 0 ? theme.colorScheme.primary : theme.colorScheme.error;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: theme.colorScheme.primary.withOpacity(0.1),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.getString('homeEnergyTitle'),
+                    style: theme.textTheme.titleLarge,
+                  ),
+                ),
+                Icon(Icons.bolt, color: theme.colorScheme.primary),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.getString('homeEnergySubtitle'),
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 18),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${snapshot.totalKwh.toStringAsFixed(1)} kWh',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '$currency${snapshot.estimatedCost.toStringAsFixed(2)}',
+                      style: theme.textTheme.labelLarge,
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          minHeight: 8,
+                          value: snapshot.goalProgress.clamp(0.0, 1.0),
+                          backgroundColor:
+                              theme.colorScheme.primary.withOpacity(0.1),
+                          valueColor: AlwaysStoppedAnimation(
+                            theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n
+                            .getString('homeEnergyGoalLabel')
+                            .replaceFirst(
+                              '{goal}',
+                              snapshot.goalKwh.toStringAsFixed(0),
+                            ),
+                        style: theme.textTheme.labelMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    changeLabel,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: changeColor,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _HomeAirQualityPreview extends StatelessWidget {

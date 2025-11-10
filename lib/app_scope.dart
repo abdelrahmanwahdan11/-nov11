@@ -7,6 +7,7 @@ import 'shared/controllers/catalog_controller.dart';
 import 'shared/controllers/compare_controller.dart';
 import 'shared/controllers/environment_controller.dart';
 import 'shared/controllers/environment_schedule_controller.dart';
+import 'shared/controllers/energy_usage_controller.dart';
 import 'shared/controllers/favorites_controller.dart';
 import 'shared/controllers/notifications_controller.dart';
 
@@ -22,6 +23,7 @@ class AppScope extends InheritedWidget {
     required this.environmentController,
     required this.environmentScheduleController,
     required this.airQualityController,
+    required this.energyUsageController,
     required super.child,
   });
 
@@ -34,6 +36,7 @@ class AppScope extends InheritedWidget {
   final EnvironmentController environmentController;
   final EnvironmentScheduleController environmentScheduleController;
   final AirQualityController airQualityController;
+  final EnergyUsageController energyUsageController;
 
   static AppScope of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppScope>();
@@ -52,6 +55,7 @@ class AppScope extends InheritedWidget {
         environmentController != oldWidget.environmentController ||
         environmentScheduleController !=
             oldWidget.environmentScheduleController ||
-        airQualityController != oldWidget.airQualityController;
+        airQualityController != oldWidget.airQualityController ||
+        energyUsageController != oldWidget.energyUsageController;
   }
 }
