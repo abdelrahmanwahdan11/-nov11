@@ -1,0 +1,204 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+
+class AppLocalizations {
+  AppLocalizations(this.locale);
+
+  final Locale locale;
+
+  static const _localizedValues = <String, Map<String, String>>{
+    'en': {
+      'appTitle': 'Smart Air Devices',
+      'getStarted': 'Get Started',
+      'next': 'Next',
+      'skip': 'Skip',
+      'signIn': 'Sign In',
+      'signUp': 'Create Account',
+      'email': 'Email',
+      'password': 'Password',
+      'confirmPassword': 'Confirm Password',
+      'forgotPassword': 'Forgot Password',
+      'continueAsGuest': 'Continue as Guest',
+      'passwordStrength': 'Password strength',
+      'weak': 'Weak',
+      'medium': 'Medium',
+      'strong': 'Strong',
+      'home': 'Home',
+      'catalog': 'Catalog',
+      'favorites': 'Favorites',
+      'cart': 'Cart',
+      'settings': 'Settings',
+      'search': 'Search',
+      'discoverDevices': 'Discover smart air experiences',
+      'recommended': 'Recommended',
+      'seeAll': 'See all',
+      'filters': 'Filters',
+      'sort': 'Sort',
+      'clear': 'Clear',
+      'addToCart': 'Add to cart',
+      'addToCompare': 'Add to compare',
+      'viewCompare': 'View compare',
+      'specifications': 'Specifications',
+      'overview': 'Overview',
+      'price': 'Price',
+      'rating': 'Rating',
+      'noise': 'Noise',
+      'power': 'Power',
+      'hepaClass': 'HEPA class',
+      'language': 'Language',
+      'appearance': 'Appearance',
+      'theme': 'Theme',
+      'light': 'Light',
+      'dark': 'Dark',
+      'primaryColor': 'Primary color',
+      'accentLime': 'Lime',
+      'accentSky': 'Sky',
+      'system': 'System',
+      'logout': 'Log out',
+      'notifications': 'Notifications',
+      'support': 'Support',
+      'warranty': 'Warranty',
+      'emptyState': 'No items yet',
+      'recentlyViewed': 'Recently viewed',
+      'compare': 'Compare',
+      'aiInfo': 'AI info',
+      'aiInfoSoon': 'Smart analysis coming soon',
+      'apply': 'Apply',
+      'priceLowHigh': 'Price: Low to High',
+      'priceHighLow': 'Price: High to Low',
+      'ratingDesc': 'Rating: High to Low',
+      'nameAsc': 'Name: A-Z',
+      'searchPlaceholder': 'Search fans, purifiers, heaters...',
+      'noResults': 'No devices match your filters',
+      'pullRefresh': 'Pull to refresh',
+      'passwordHint': 'Use at least 8 characters with numbers',
+      'emailHint': 'Enter your email',
+      'guestWelcome': 'Browse as guest',
+      'faqTitle': 'Frequently asked questions',
+      'languageEnglish': 'English',
+      'languageArabic': 'Arabic',
+      'colorPicker': 'Accent color',
+      'clearPreferences': 'Clear preferences',
+      'preferencesCleared': 'Preferences cleared',
+      'qty': 'Quantity',
+      'total': 'Total',
+      'proceed': 'Proceed',
+      'viewAll': 'View all',
+      'filtersApplied': 'Filters applied',
+      'sortApplied': 'Sort applied',
+    },
+    'ar': {
+      'appTitle': 'أجهزة الهواء الذكية',
+      'getStarted': 'ابدأ الآن',
+      'next': 'التالي',
+      'skip': 'تخطي',
+      'signIn': 'تسجيل الدخول',
+      'signUp': 'إنشاء حساب',
+      'email': 'البريد الإلكتروني',
+      'password': 'كلمة المرور',
+      'confirmPassword': 'تأكيد كلمة المرور',
+      'forgotPassword': 'نسيت كلمة المرور',
+      'continueAsGuest': 'الدخول كضيف',
+      'passwordStrength': 'قوة كلمة المرور',
+      'weak': 'ضعيفة',
+      'medium': 'متوسطة',
+      'strong': 'قوية',
+      'home': 'الرئيسية',
+      'catalog': 'الكتالوج',
+      'favorites': 'المفضلة',
+      'cart': 'السلة',
+      'settings': 'الإعدادات',
+      'search': 'بحث',
+      'discoverDevices': 'اكتشف تجربة هواء ذكية',
+      'recommended': 'مختارات',
+      'seeAll': 'عرض الكل',
+      'filters': 'فلاتر',
+      'sort': 'ترتيب',
+      'clear': 'مسح',
+      'addToCart': 'أضف إلى السلة',
+      'addToCompare': 'أضف للمقارنة',
+      'viewCompare': 'عرض المقارنة',
+      'specifications': 'المواصفات',
+      'overview': 'نظرة عامة',
+      'price': 'السعر',
+      'rating': 'التقييم',
+      'noise': 'الضجيج',
+      'power': 'القدرة',
+      'hepaClass': 'فئة HEPA',
+      'language': 'اللغة',
+      'appearance': 'المظهر',
+      'theme': 'الوضع',
+      'light': 'فاتح',
+      'dark': 'داكن',
+      'primaryColor': 'اللون الرئيسي',
+      'accentLime': 'ليموني',
+      'accentSky': 'أزرق فاتح',
+      'system': 'النظام',
+      'logout': 'تسجيل الخروج',
+      'notifications': 'الإشعارات',
+      'support': 'الدعم',
+      'warranty': 'الضمان',
+      'emptyState': 'لا توجد عناصر بعد',
+      'recentlyViewed': 'تمت مشاهدته مؤخرًا',
+      'compare': 'مقارنة',
+      'aiInfo': 'معلومة ذكية',
+      'aiInfoSoon': 'سيتم تفعيل التحليل الذكي قريبًا',
+      'apply': 'تطبيق',
+      'priceLowHigh': 'السعر: من الأقل للأعلى',
+      'priceHighLow': 'السعر: من الأعلى للأقل',
+      'ratingDesc': 'التقييم: من الأعلى',
+      'nameAsc': 'الاسم: أ-ي',
+      'searchPlaceholder': 'ابحث عن مراوح، منقّيات، سخانات...',
+      'noResults': 'لا توجد أجهزة مطابقة للخيارات',
+      'pullRefresh': 'اسحب للتحديث',
+      'passwordHint': 'استخدم 8 أحرف على الأقل مع أرقام',
+      'emailHint': 'أدخل بريدك الإلكتروني',
+      'guestWelcome': 'تصفح كضيف',
+      'faqTitle': 'الأسئلة الشائعة',
+      'languageEnglish': 'الإنجليزية',
+      'languageArabic': 'العربية',
+      'colorPicker': 'لون التمييز',
+      'clearPreferences': 'مسح التفضيلات',
+      'preferencesCleared': 'تم مسح التفضيلات',
+      'qty': 'الكمية',
+      'total': 'الإجمالي',
+      'proceed': 'متابعة',
+      'viewAll': 'عرض الكل',
+      'filtersApplied': 'تم تطبيق الفلاتر',
+      'sortApplied': 'تم تطبيق الترتيب',
+    },
+  };
+
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
+  }
+
+  String getString(String key) {
+    final values = _localizedValues[locale.languageCode];
+    return values?[key] ?? key;
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
+
+  static const supportedLocales = [Locale('en'), Locale('ar')];
+}
+
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  bool isSupported(Locale locale) =>
+      AppLocalizations._localizedValues.keys.contains(locale.languageCode);
+
+  @override
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture(AppLocalizations(locale));
+  }
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
