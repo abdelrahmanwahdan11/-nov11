@@ -10,6 +10,7 @@ import '../../shared/controllers/environment_schedule_controller.dart';
 import '../../shared/controllers/favorites_controller.dart';
 import '../../shared/controllers/maintenance_controller.dart';
 import '../../shared/controllers/diagnostics_controller.dart';
+import '../../shared/controllers/comfort_controller.dart';
 import '../../shared/data/mock_products.dart';
 import '../../shared/models/app_prefs.dart';
 import '../../shared/models/air_quality.dart';
@@ -18,6 +19,7 @@ import '../../shared/models/environment_scene.dart';
 import '../../shared/models/environment_schedule.dart';
 import '../../shared/models/maintenance_task.dart';
 import '../../shared/models/device_diagnostic.dart';
+import '../../shared/models/comfort_snapshot.dart';
 import '../../shared/models/product.dart';
 import '../../shared/widgets/air_quality_gauge.dart';
 import '../../shared/widgets/chip_filter.dart';
@@ -71,6 +73,7 @@ class _HomePageState extends State<HomePage> {
     final maintenance = scope.maintenanceController;
     final scheduleController = scope.environmentScheduleController;
     final diagnostics = scope.diagnosticsController;
+    final comfort = scope.comfortController;
     final routines = _RoutineBlueprint.samples(l10n);
     final categories = {
       'all': l10n.getString('catalog'),
@@ -198,6 +201,13 @@ class _HomePageState extends State<HomePage> {
                         ),
                         _quickAction(
                           context,
+                          icon: Icons.self_improvement,
+                          label: l10n.getString('quickActionComfort'),
+                          onTap: () =>
+                              Navigator.of(context).pushNamed('/comfort'),
+                        ),
+                        _quickAction(
+                          context,
                           icon: Icons.shopping_cart,
                           label: l10n.getString('quickActionCart'),
                           onTap: () =>
@@ -250,6 +260,32 @@ class _HomePageState extends State<HomePage> {
                           snapshot: snapshot,
                           onTap: () =>
                               Navigator.of(context).pushNamed('/energy'),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    ValueListenableBuilder<String>(
+                      valueListenable: comfort.focusNotifier,
+                      builder: (context, focus, _) {
+                        return ValueListenableBuilder<List<ComfortSnapshot>>(
+                          valueListenable: comfort.snapshotsNotifier,
+                          builder: (context, snapshots, __) {
+                            if (snapshots.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            final score = comfort.averageScoreForFocus(focus);
+                            final trend = comfort.trendForFocus(focus);
+                            final latest = comfort.latestForFocus(focus);
+                            return _HomeComfortPreview(
+                              focusLabel: _comfortFocusLabel(l10n, focus),
+                              score: score,
+                              trend: trend,
+                              lastUpdated: latest?.timestamp,
+                              onTap: () =>
+                                  Navigator.of(context).pushNamed('/comfort'),
+                              l10n: l10n,
+                            );
+                          },
                         );
                       },
                     ),
@@ -1459,6 +1495,168 @@ class _HomeEnergyPreview extends StatelessWidget {
       ),
     );
   }
+}
+
+class _HomeComfortPreview extends StatelessWidget {
+  const _HomeComfortPreview({
+    required this.focusLabel,
+    required this.score,
+    required this.trend,
+    required this.lastUpdated,
+    required this.onTap,
+    required this.l10n,
+  });
+
+  final String focusLabel;
+  final int score;
+  final ComfortTrend trend;
+  final DateTime? lastUpdated;
+  final VoidCallback onTap;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.primary;
+    final trendLabel = _comfortTrendLabel(l10n, trend);
+    final trendIcon = _comfortTrendIcon(trend);
+    final lastSynced = lastUpdated != null
+        ? _formatComfortTimestamp(context, lastUpdated!)
+        : l10n.getString('comfortNoSessions');
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              color.withOpacity(0.14),
+              theme.colorScheme.surface,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.getString('homeComfortPreviewTitle'),
+                    style: theme.textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${l10n.getString('homeComfortPreviewFocusLabel')}: $focusLabel',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${l10n.getString('comfortLastUpdated')} · $lastSynced',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(trendIcon, color: color),
+                      const SizedBox(width: 8),
+                      Text(
+                        trendLabel,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: color,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        l10n.getString('homeComfortPreviewScore'),
+                        style: theme.textTheme.labelLarge,
+                      ),
+                      Text(
+                        '$score',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _comfortFocusLabel(AppLocalizations l10n, String focus) {
+  switch (focus) {
+    case 'sleep':
+      return l10n.getString('comfortFocusSleep');
+    case 'productivity':
+      return l10n.getString('comfortFocusProductivity');
+    case 'allergy':
+      return l10n.getString('comfortFocusAllergy');
+  }
+  return focus;
+}
+
+String _comfortTrendLabel(AppLocalizations l10n, ComfortTrend trend) {
+  switch (trend) {
+    case ComfortTrend.improving:
+      return l10n.getString('comfortTrendImproving');
+    case ComfortTrend.declining:
+      return l10n.getString('comfortTrendDeclining');
+    case ComfortTrend.steady:
+    default:
+      return l10n.getString('comfortTrendStable');
+  }
+}
+
+IconData _comfortTrendIcon(ComfortTrend trend) {
+  switch (trend) {
+    case ComfortTrend.improving:
+      return Icons.trending_up;
+    case ComfortTrend.declining:
+      return Icons.trending_down;
+    case ComfortTrend.steady:
+    default:
+      return Icons.trending_flat;
+  }
+}
+
+String _formatComfortTimestamp(BuildContext context, DateTime timestamp) {
+  final material = MaterialLocalizations.of(context);
+  final date = material.formatShortDate(timestamp);
+  final time = material.formatTimeOfDay(TimeOfDay.fromDateTime(timestamp));
+  return '$date · $time';
 }
 
 class _HomeAirQualityPreview extends StatelessWidget {

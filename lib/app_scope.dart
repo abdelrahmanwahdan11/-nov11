@@ -12,6 +12,7 @@ import 'shared/controllers/favorites_controller.dart';
 import 'shared/controllers/notifications_controller.dart';
 import 'shared/controllers/maintenance_controller.dart';
 import 'shared/controllers/diagnostics_controller.dart';
+import 'shared/controllers/comfort_controller.dart';
 
 class AppScope extends InheritedWidget {
   const AppScope({
@@ -28,6 +29,7 @@ class AppScope extends InheritedWidget {
     required this.energyUsageController,
     required this.maintenanceController,
     required this.diagnosticsController,
+    required this.comfortController,
     required super.child,
   });
 
@@ -43,6 +45,7 @@ class AppScope extends InheritedWidget {
   final EnergyUsageController energyUsageController;
   final MaintenanceController maintenanceController;
   final DiagnosticsController diagnosticsController;
+  final ComfortController comfortController;
 
   static AppScope of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppScope>();
@@ -64,6 +67,7 @@ class AppScope extends InheritedWidget {
         airQualityController != oldWidget.airQualityController ||
         energyUsageController != oldWidget.energyUsageController ||
         maintenanceController != oldWidget.maintenanceController ||
-        diagnosticsController != oldWidget.diagnosticsController;
+        diagnosticsController != oldWidget.diagnosticsController ||
+        comfortController != oldWidget.comfortController;
   }
 }
