@@ -11,6 +11,7 @@ import '../../shared/controllers/favorites_controller.dart';
 import '../../shared/controllers/maintenance_controller.dart';
 import '../../shared/controllers/diagnostics_controller.dart';
 import '../../shared/controllers/comfort_controller.dart';
+import '../../shared/controllers/wellness_controller.dart';
 import '../../shared/data/mock_products.dart';
 import '../../shared/models/app_prefs.dart';
 import '../../shared/models/air_quality.dart';
@@ -20,6 +21,8 @@ import '../../shared/models/environment_schedule.dart';
 import '../../shared/models/maintenance_task.dart';
 import '../../shared/models/device_diagnostic.dart';
 import '../../shared/models/comfort_snapshot.dart';
+import '../../shared/models/wellness_metric.dart';
+import '../../shared/models/wellness_recommendation.dart';
 import '../../shared/models/product.dart';
 import '../../shared/widgets/air_quality_gauge.dart';
 import '../../shared/widgets/chip_filter.dart';
@@ -74,6 +77,7 @@ class _HomePageState extends State<HomePage> {
     final scheduleController = scope.environmentScheduleController;
     final diagnostics = scope.diagnosticsController;
     final comfort = scope.comfortController;
+    final wellness = scope.wellnessController;
     final routines = _RoutineBlueprint.samples(l10n);
     final categories = {
       'all': l10n.getString('catalog'),
@@ -187,6 +191,13 @@ class _HomePageState extends State<HomePage> {
                         ),
                         _quickAction(
                           context,
+                          icon: Icons.spa,
+                          label: l10n.getString('quickActionWellness'),
+                          onTap: () =>
+                              Navigator.of(context).pushNamed('/wellness'),
+                        ),
+                        _quickAction(
+                          context,
                           icon: Icons.air,
                           label: l10n.getString('quickActionAirQuality'),
                           onTap: () =>
@@ -260,6 +271,48 @@ class _HomePageState extends State<HomePage> {
                           snapshot: snapshot,
                           onTap: () =>
                               Navigator.of(context).pushNamed('/energy'),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    ValueListenableBuilder<List<WellnessMetric>>(
+                      valueListenable: wellness.metricsNotifier,
+                      builder: (context, metrics, _) {
+                        if (metrics.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return ValueListenableBuilder<String?>(
+                          valueListenable: wellness.focusMetricNotifier,
+                          builder: (context, focusId, __) {
+                            final focusMetric = _resolveWellnessFocus(
+                              metrics,
+                              focusId,
+                            );
+                            return ValueListenableBuilder<double>(
+                              valueListenable:
+                                  wellness.compositeScoreNotifier,
+                              builder: (context, score, ___) {
+                                return ValueListenableBuilder<
+                                    List<WellnessRecommendation>>(
+                                  valueListenable:
+                                      wellness.recommendationsNotifier,
+                                  builder: (context, recommendations, ____) {
+                                    final pinnedCount = recommendations
+                                        .where((tip) => tip.pinned)
+                                        .length;
+                                    return _HomeWellnessPreview(
+                                      l10n: l10n,
+                                      score: score,
+                                      focusMetric: focusMetric,
+                                      pinnedCount: pinnedCount,
+                                      onTap: () => Navigator.of(context)
+                                          .pushNamed('/wellness'),
+                                    );
+                                  },
+                                );
+                              },
+                            );
+                          },
                         );
                       },
                     ),
@@ -723,6 +776,20 @@ class _HomePageState extends State<HomePage> {
           .replaceFirst('{name}', name);
     }
     return context.l10n.getString('greetingGuest');
+  }
+
+  WellnessMetric _resolveWellnessFocus(
+    List<WellnessMetric> metrics,
+    String? focusId,
+  ) {
+    assert(metrics.isNotEmpty, 'metrics must not be empty');
+    if (focusId == null) {
+      return metrics.first;
+    }
+    return metrics.firstWhere(
+      (metric) => metric.id == focusId,
+      orElse: () => metrics.first,
+    );
   }
 
   Widget _quickAction(
@@ -1488,6 +1555,139 @@ class _HomeEnergyPreview extends StatelessWidget {
                   ),
                 ),
                 const Icon(Icons.chevron_right),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeWellnessPreview extends StatelessWidget {
+  const _HomeWellnessPreview({
+    required this.score,
+    required this.focusMetric,
+    required this.pinnedCount,
+    required this.onTap,
+  });
+
+  final double score;
+  final WellnessMetric focusMetric;
+  final int pinnedCount;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+    final focusTitle = l10n.getString(focusMetric.titleKey);
+    final focusSubtitle = l10n.getString(focusMetric.subtitleKey);
+    final pinnedLabel =
+        l10n.getString('homeWellnessPinned').replaceFirst('{count}', '$pinnedCount');
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(28),
+      child: Ink(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: LinearGradient(
+            colors: [
+              focusMetric.accent.withOpacity(0.35),
+              theme.cardColor,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(
+            color: focusMetric.accent.withOpacity(0.45),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.getString('homeWellnessTitle'),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Icon(Icons.spa, color: theme.colorScheme.primary),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.getString('homeWellnessSubtitle'),
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 18),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: focusMetric.accent.withOpacity(0.2),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${score.toStringAsFixed(0)}%',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.getString('homeWellnessFocusLabel'),
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        focusTitle,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        focusSubtitle,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          Chip(
+                            label: Text(pinnedLabel),
+                            backgroundColor:
+                                theme.colorScheme.primary.withOpacity(0.12),
+                          ),
+                          Chip(
+                            label: Text(l10n.getString('wellnessScoreLabel')),
+                            backgroundColor: theme.colorScheme.surface,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ],

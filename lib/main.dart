@@ -22,6 +22,7 @@ import 'features/settings/settings_page.dart';
 import 'features/support/support_page.dart';
 import 'features/maintenance/maintenance_page.dart';
 import 'features/comfort/comfort_page.dart';
+import 'features/wellness/wellness_page.dart';
 import 'shared/controllers/air_quality_controller.dart';
 import 'shared/controllers/app_controller.dart';
 import 'shared/controllers/cart_controller.dart';
@@ -35,6 +36,7 @@ import 'shared/controllers/notifications_controller.dart';
 import 'shared/controllers/maintenance_controller.dart';
 import 'shared/controllers/diagnostics_controller.dart';
 import 'shared/controllers/comfort_controller.dart';
+import 'shared/controllers/wellness_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,6 +63,8 @@ Future<void> main() async {
   await diagnosticsController.load();
   final comfortController = ComfortController();
   await comfortController.load();
+  final wellnessController = WellnessController();
+  await wellnessController.load();
   runApp(
     AppScope(
       appController: appController,
@@ -76,6 +80,7 @@ Future<void> main() async {
       maintenanceController: maintenanceController,
       diagnosticsController: diagnosticsController,
       comfortController: comfortController,
+      wellnessController: wellnessController,
       child: const SmartAirApp(),
     ),
   );
@@ -150,6 +155,9 @@ class _SmartAirAppState extends State<SmartAirApp> {
               case '/comfort':
                 return MaterialPageRoute(
                     builder: (_) => const ComfortPage());
+              case '/wellness':
+                return MaterialPageRoute(
+                    builder: (_) => const WellnessPage());
               case '/environment-schedules':
                 return MaterialPageRoute(
                   builder: (_) => const EnvironmentSchedulePage(),

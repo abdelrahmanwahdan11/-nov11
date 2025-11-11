@@ -118,6 +118,9 @@ class AppController {
     await prefs.remove('preferredScene');
     await prefs.remove('maintenanceTasks');
     await prefs.remove('maintenanceRemindersEnabled');
+    await prefs.remove('wellnessDismissed');
+    await prefs.remove('wellnessPinned');
+    await prefs.remove('wellnessFocus');
     prefsNotifier.value = AppPrefs.defaults();
     userNotifier.value = null;
   }
